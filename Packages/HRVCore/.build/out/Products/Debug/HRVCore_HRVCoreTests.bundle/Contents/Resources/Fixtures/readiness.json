@@ -1,0 +1,1301 @@
+{
+ "records": [
+  {
+   "when": "2026-09-01 07:00",
+   "ln_rmssd": 3.92,
+   "rmssd": 55.0,
+   "mean_hr": 50.4,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1500.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-02 07:00",
+   "ln_rmssd": 4.0,
+   "rmssd": 55.0,
+   "mean_hr": 52.8,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1501.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-03 07:00",
+   "ln_rmssd": 4.08,
+   "rmssd": 55.0,
+   "mean_hr": 51.2,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1502.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-04 07:00",
+   "ln_rmssd": 3.96,
+   "rmssd": 55.0,
+   "mean_hr": 53.6,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1503.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-05 07:00",
+   "ln_rmssd": 4.04,
+   "rmssd": 55.0,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1504.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-06 07:00",
+   "ln_rmssd": 3.92,
+   "rmssd": 55.0,
+   "mean_hr": 50.4,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1505.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-07 07:00",
+   "ln_rmssd": 4.0,
+   "rmssd": 55.0,
+   "mean_hr": 52.8,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1506.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-08 07:00",
+   "ln_rmssd": 4.08,
+   "rmssd": 55.0,
+   "mean_hr": 51.2,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1507.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-09 07:00",
+   "ln_rmssd": 3.96,
+   "rmssd": 55.0,
+   "mean_hr": 53.6,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1508.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-10 07:00",
+   "ln_rmssd": 4.04,
+   "rmssd": 55.0,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1509.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-11 07:00",
+   "ln_rmssd": 3.92,
+   "rmssd": 55.0,
+   "mean_hr": 50.4,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1510.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-12 07:00",
+   "ln_rmssd": 4.0,
+   "rmssd": 55.0,
+   "mean_hr": 52.8,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1511.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-13 07:00",
+   "ln_rmssd": 4.08,
+   "rmssd": 55.0,
+   "mean_hr": 51.2,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1512.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-14 07:00",
+   "ln_rmssd": 3.96,
+   "rmssd": 55.0,
+   "mean_hr": 53.6,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1513.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-15 07:00",
+   "ln_rmssd": 4.04,
+   "rmssd": 55.0,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1514.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-16 07:00",
+   "ln_rmssd": 3.92,
+   "rmssd": 55.0,
+   "mean_hr": 50.4,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1515.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-17 07:00",
+   "ln_rmssd": 4.0,
+   "rmssd": 55.0,
+   "mean_hr": 52.8,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1516.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-18 07:00",
+   "ln_rmssd": 4.08,
+   "rmssd": 55.0,
+   "mean_hr": 51.2,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1517.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-19 07:00",
+   "ln_rmssd": 3.96,
+   "rmssd": 55.0,
+   "mean_hr": 53.6,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1518.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-20 07:00",
+   "ln_rmssd": 4.04,
+   "rmssd": 55.0,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1519.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-21 07:00",
+   "ln_rmssd": 3.92,
+   "rmssd": 55.0,
+   "mean_hr": 50.4,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1520.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-22 07:00",
+   "ln_rmssd": 4.0,
+   "rmssd": 55.0,
+   "mean_hr": 52.8,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1521.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-23 07:00",
+   "ln_rmssd": 4.08,
+   "rmssd": 55.0,
+   "mean_hr": 51.2,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1522.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-24 07:00",
+   "ln_rmssd": 3.96,
+   "rmssd": 55.0,
+   "mean_hr": 53.6,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1523.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-25 07:00",
+   "ln_rmssd": 4.04,
+   "rmssd": 55.0,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1524.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-26 07:00",
+   "ln_rmssd": 3.92,
+   "rmssd": 55.0,
+   "mean_hr": 50.4,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1525.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-27 07:00",
+   "ln_rmssd": 4.0,
+   "rmssd": 55.0,
+   "mean_hr": 52.8,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1526.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-28 07:00",
+   "ln_rmssd": 4.08,
+   "rmssd": 55.0,
+   "mean_hr": 51.2,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1527.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-29 07:00",
+   "ln_rmssd": 3.96,
+   "rmssd": 55.0,
+   "mean_hr": 53.6,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1528.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-09-30 07:00",
+   "ln_rmssd": 4.04,
+   "rmssd": 55.0,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": 1529.0,
+   "lf_ms2": 600.0,
+   "breathing_rate": 13.0
+  },
+  {
+   "when": "2026-10-01 07:00",
+   "ln_rmssd": 4.02,
+   "rmssd": 55.70110582679559,
+   "mean_hr": 52.5,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-02 07:00",
+   "ln_rmssd": 3.85,
+   "rmssd": 46.993063231579285,
+   "mean_hr": 53.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-03 07:00",
+   "ln_rmssd": 3.8,
+   "rmssd": 44.701184493300815,
+   "mean_hr": 60.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-04 07:00",
+   "ln_rmssd": 3.78,
+   "rmssd": 43.81604173557396,
+   "mean_hr": 61.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-05 07:00",
+   "ln_rmssd": 4.0,
+   "rmssd": 54.598150033144236,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 40,
+   "artefact_pct": 25.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-06 07:00",
+   "ln_rmssd": 4.3,
+   "rmssd": 73.69979369959579,
+   "mean_hr": 46.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-07 07:00",
+   "ln_rmssd": 3.93,
+   "rmssd": 50.90697766920144,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-08 07:00",
+   "ln_rmssd": 3.93,
+   "rmssd": 50.90697766920144,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-09 07:00",
+   "ln_rmssd": 3.93,
+   "rmssd": 50.90697766920144,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-10 07:00",
+   "ln_rmssd": 3.93,
+   "rmssd": 50.90697766920144,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-11 07:00",
+   "ln_rmssd": 3.93,
+   "rmssd": 50.90697766920144,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-10-12 07:00",
+   "ln_rmssd": 3.93,
+   "rmssd": 50.90697766920144,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  },
+  {
+   "when": "2026-12-21 07:00",
+   "ln_rmssd": 4.0,
+   "rmssd": 54.598150033144236,
+   "mean_hr": 52.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null
+  }
+ ],
+ "assessments": [
+  {
+   "status": "baseline",
+   "score": null,
+   "baseline_n": 0,
+   "ln_mean": null,
+   "ln_sd": null,
+   "ln_week": 3.92,
+   "hr_mean": null,
+   "hr_sd": null,
+   "z_hrv": null,
+   "z_hr": null,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Building your baseline: 0 of 7 days. Verdicts start once a week of mornings is recorded."
+   ]
+  },
+  {
+   "status": "baseline",
+   "score": null,
+   "baseline_n": 1,
+   "ln_mean": null,
+   "ln_sd": null,
+   "ln_week": 3.96,
+   "hr_mean": null,
+   "hr_sd": null,
+   "z_hrv": null,
+   "z_hr": null,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Building your baseline: 1 of 7 days. Verdicts start once a week of mornings is recorded."
+   ]
+  },
+  {
+   "status": "baseline",
+   "score": null,
+   "baseline_n": 2,
+   "ln_mean": null,
+   "ln_sd": null,
+   "ln_week": 4.0,
+   "hr_mean": null,
+   "hr_sd": null,
+   "z_hrv": null,
+   "z_hr": null,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Building your baseline: 2 of 7 days. Verdicts start once a week of mornings is recorded."
+   ]
+  },
+  {
+   "status": "baseline",
+   "score": null,
+   "baseline_n": 3,
+   "ln_mean": null,
+   "ln_sd": null,
+   "ln_week": 3.99,
+   "hr_mean": null,
+   "hr_sd": null,
+   "z_hrv": null,
+   "z_hr": null,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Building your baseline: 3 of 7 days. Verdicts start once a week of mornings is recorded."
+   ]
+  },
+  {
+   "status": "baseline",
+   "score": null,
+   "baseline_n": 4,
+   "ln_mean": null,
+   "ln_sd": null,
+   "ln_week": 4.0,
+   "hr_mean": null,
+   "hr_sd": null,
+   "z_hrv": null,
+   "z_hr": null,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Building your baseline: 4 of 7 days. Verdicts start once a week of mornings is recorded."
+   ]
+  },
+  {
+   "status": "baseline",
+   "score": null,
+   "baseline_n": 5,
+   "ln_mean": null,
+   "ln_sd": null,
+   "ln_week": 3.986666666666667,
+   "hr_mean": null,
+   "hr_sd": null,
+   "z_hrv": null,
+   "z_hr": null,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Building your baseline: 5 of 7 days. Verdicts start once a week of mornings is recorded."
+   ]
+  },
+  {
+   "status": "baseline",
+   "score": null,
+   "baseline_n": 6,
+   "ln_mean": null,
+   "ln_sd": null,
+   "ln_week": 3.988571428571429,
+   "hr_mean": null,
+   "hr_sd": null,
+   "z_hrv": null,
+   "z_hr": null,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Building your baseline: 6 of 7 days. Verdicts start once a week of mornings is recorded."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 92,
+   "baseline_n": 7,
+   "ln_mean": 3.988571428571429,
+   "ln_sd": 0.0598410593234477,
+   "ln_week": 4.011428571428572,
+   "hr_mean": 51.885714285714286,
+   "hr_sd": 1.5,
+   "z_hrv": 1.5278568337901475,
+   "z_hr": -0.4571428571428555,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 63,
+   "baseline_n": 8,
+   "ln_mean": 4.0,
+   "ln_sd": 0.06414269805898191,
+   "ln_week": 4.005714285714285,
+   "hr_mean": 51.8,
+   "hr_sd": 1.5,
+   "z_hrv": -0.6236095644623235,
+   "z_hr": 1.2000000000000028,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 82,
+   "baseline_n": 9,
+   "ln_mean": 3.9955555555555557,
+   "ln_sd": 0.06146362971528597,
+   "ln_week": 4.0,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": 0.723101526062184,
+   "z_hr": 0.0,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 68,
+   "baseline_n": 10,
+   "ln_mean": 4.0,
+   "ln_sd": 0.059628479399994445,
+   "ln_week": 3.994285714285714,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": -1.3416407864998738,
+   "z_hr": -1.0666666666666675,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 73,
+   "baseline_n": 11,
+   "ln_mean": 3.9927272727272727,
+   "ln_sd": 0.06149648918286465,
+   "ln_week": 3.988571428571429,
+   "hr_mean": 51.85454545454545,
+   "hr_sd": 1.5,
+   "z_hrv": 0.11826247919781718,
+   "z_hr": 0.6303030303030303,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 92,
+   "baseline_n": 12,
+   "ln_mean": 3.9933333333333336,
+   "ln_sd": 0.05867217604984707,
+   "ln_week": 4.011428571428572,
+   "hr_mean": 51.93333333333334,
+   "hr_sd": 1.5,
+   "z_hrv": 1.4771340097056507,
+   "z_hr": -0.48888888888888954,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 63,
+   "baseline_n": 13,
+   "ln_mean": 4.0,
+   "ln_sd": 0.06110100926607792,
+   "ln_week": 4.005714285714285,
+   "hr_mean": 51.87692307692308,
+   "hr_sd": 1.5,
+   "z_hrv": -0.6546536707079771,
+   "z_hr": 1.1487179487179493,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 82,
+   "baseline_n": 14,
+   "ln_mean": 3.9971428571428573,
+   "ln_sd": 0.05966941897186168,
+   "ln_week": 4.0,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": 0.7182430061427757,
+   "z_hr": 0.0,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 67,
+   "baseline_n": 15,
+   "ln_mean": 4.0,
+   "ln_sd": 0.05855400437691204,
+   "ln_week": 3.994285714285714,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": -1.3662601021279464,
+   "z_hr": -1.0666666666666675,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 73,
+   "baseline_n": 16,
+   "ln_mean": 3.995,
+   "ln_sd": 0.06000000000000005,
+   "ln_week": 3.988571428571429,
+   "hr_mean": 51.9,
+   "hr_sd": 1.5,
+   "z_hrv": 0.08333333333333148,
+   "z_hr": 0.5999999999999991,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 92,
+   "baseline_n": 17,
+   "ln_mean": 3.995294117647059,
+   "ln_sd": 0.05810740562299525,
+   "ln_week": 4.011428571428572,
+   "hr_mean": 51.95294117647059,
+   "hr_sd": 1.5,
+   "z_hrv": 1.4577467612737423,
+   "z_hr": -0.5019607843137237,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 63,
+   "baseline_n": 18,
+   "ln_mean": 4.0,
+   "ln_sd": 0.059803600127712214,
+   "ln_week": 4.005714285714285,
+   "hr_mean": 51.91111111111111,
+   "hr_sd": 1.5,
+   "z_hrv": -0.6688560540599386,
+   "z_hr": 1.1259259259259267,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 82,
+   "baseline_n": 19,
+   "ln_mean": 3.9978947368421047,
+   "ln_sd": 0.05883866334387257,
+   "ln_week": 4.0,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": 0.7156053649930533,
+   "z_hr": 0.0,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 67,
+   "baseline_n": 20,
+   "ln_mean": 4.0,
+   "ln_sd": 0.05803810000880098,
+   "ln_week": 3.994285714285714,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": -1.3784048752090223,
+   "z_hr": -1.0666666666666675,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 73,
+   "baseline_n": 21,
+   "ln_mean": 3.9961904761904763,
+   "ln_sd": 0.059201029592076446,
+   "ln_week": 3.988571428571429,
+   "hr_mean": 51.92380952380953,
+   "hr_sd": 1.5,
+   "z_hrv": 0.0643489452087769,
+   "z_hr": 0.5841269841269773,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 92,
+   "baseline_n": 22,
+   "ln_mean": 3.9963636363636366,
+   "ln_sd": 0.05777999773734977,
+   "ln_week": 4.011428571428572,
+   "hr_mean": 51.96363636363637,
+   "hr_sd": 1.5,
+   "z_hrv": 1.447496831283187,
+   "z_hr": -0.5090909090909103,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 63,
+   "baseline_n": 23,
+   "ln_mean": 4.0,
+   "ln_sd": 0.05908391567007976,
+   "ln_week": 4.005714285714285,
+   "hr_mean": 51.9304347826087,
+   "hr_sd": 1.5,
+   "z_hrv": -0.67700320038633,
+   "z_hr": 1.1130434782608678,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 82,
+   "baseline_n": 24,
+   "ln_mean": 3.998333333333333,
+   "ln_sd": 0.05835920751217653,
+   "ln_week": 4.0,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": 0.7139690280745039,
+   "z_hr": 0.0,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 67,
+   "baseline_n": 25,
+   "ln_mean": 4.0,
+   "ln_sd": 0.05773502691896263,
+   "ln_week": 3.994285714285714,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": -1.3856406460551018,
+   "z_hr": -1.0666666666666675,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 72,
+   "baseline_n": 26,
+   "ln_mean": 3.996923076923077,
+   "ln_sd": 0.058703950856427475,
+   "ln_week": 3.988571428571429,
+   "hr_mean": 51.93846153846154,
+   "hr_sd": 1.5,
+   "z_hrv": 0.05241424183609417,
+   "z_hr": 0.5743589743589723,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 92,
+   "baseline_n": 27,
+   "ln_mean": 3.997037037037037,
+   "ln_sd": 0.05756700542811064,
+   "ln_week": 4.011428571428572,
+   "hr_mean": 51.970370370370375,
+   "hr_sd": 1.5,
+   "z_hrv": 1.4411547438674155,
+   "z_hr": -0.5135802469135816,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 63,
+   "baseline_n": 28,
+   "ln_mean": 4.0,
+   "ln_sd": 0.058626248703435246,
+   "ln_week": 4.005714285714285,
+   "hr_mean": 51.94285714285714,
+   "hr_sd": 1.5,
+   "z_hrv": -0.6822882392210131,
+   "z_hr": 1.1047619047619055,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 82,
+   "baseline_n": 29,
+   "ln_mean": 3.9986206896551724,
+   "ln_sd": 0.058047033757797,
+   "ln_week": 4.0,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": 0.712858309306279,
+   "z_hr": 0.0,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 77,
+   "baseline_n": 30,
+   "ln_mean": 4.0,
+   "ln_sd": 0.05753559617824615,
+   "ln_week": 4.008571428571428,
+   "hr_mean": 52.0,
+   "hr_sd": 1.5,
+   "z_hrv": 0.3476108935768958,
+   "z_hr": 0.3333333333333333,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV and resting HR within your normal range: good day for a hard session."
+   ]
+  },
+  {
+   "status": "rest",
+   "score": 46,
+   "baseline_n": 31,
+   "ln_mean": 4.000645161290323,
+   "ln_sd": 0.05668247723773597,
+   "ln_week": 3.9814285714285718,
+   "hr_mean": 52.016129032258064,
+   "hr_sd": 1.5,
+   "z_hrv": -2.6577024969902303,
+   "z_hr": 0.655913978494624,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Clearly below your normal: recovery day, easy movement only."
+   ]
+  },
+  {
+   "status": "rest",
+   "score": 16,
+   "baseline_n": 32,
+   "ln_mean": 3.9959375,
+   "ln_sd": 0.06179358850758843,
+   "ln_week": 3.9642857142857144,
+   "hr_mean": 52.046875,
+   "hr_sd": 1.5,
+   "z_hrv": -3.17083867003352,
+   "z_hr": 5.302083333333333,
+   "illness": true,
+   "illness_streak": 1,
+   "low_confidence": false,
+   "notes": [
+    "Resting HR is +8 bpm above your normal while HRV is suppressed: a pattern typical of an oncoming infection or heavy systemic stress. Rest, hydrate, watch for symptoms.",
+    "Your 7-day HRV average is below your normal range: accumulated fatigue, consider an easier week."
+   ]
+  },
+  {
+   "status": "rest",
+   "score": 20,
+   "baseline_n": 33,
+   "ln_mean": 3.9899999999999998,
+   "ln_sd": 0.0697316284049068,
+   "ln_week": 3.932857142857143,
+   "hr_mean": 52.28787878787879,
+   "hr_sd": 1.7758374038319176,
+   "z_hrv": -3.0115459054047116,
+   "z_hr": 4.9059228020099805,
+   "illness": true,
+   "illness_streak": 2,
+   "low_confidence": false,
+   "notes": [
+    "Resting HR is +9 bpm above your normal while HRV is suppressed for 2 days in a row: a pattern typical of an oncoming infection or heavy systemic stress. Rest, hydrate, watch for symptoms.",
+    "Your 7-day HRV average is below your normal range: accumulated fatigue, consider an easier week."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 78,
+   "baseline_n": 34,
+   "ln_mean": 3.9838235294117643,
+   "ln_sd": 0.07753844426270709,
+   "ln_week": 3.9214285714285713,
+   "hr_mean": 52.544117647058826,
+   "hr_sd": 2.3000910622909387,
+   "z_hrv": 0.2086251631955417,
+   "z_hr": -0.23656352393147143,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": true,
+   "notes": [
+    "Your 7-day HRV average is below your normal range: accumulated fatigue, consider an easier week.",
+    "Low signal quality (25 % artefacts, 40 beats): treat today's verdict with caution; tighten the band and keep still.",
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "ready",
+   "score": 100,
+   "baseline_n": 35,
+   "ln_mean": 3.984285714285714,
+   "ln_sd": 0.0764385841238386,
+   "ln_week": 3.9699999999999998,
+   "hr_mean": 52.52857142857143,
+   "hr_sd": 2.267879474514545,
+   "z_hrv": 4.1303000223394415,
+   "z_hr": -2.8787118107186522,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "HRV unusually high with an unusually low HR: can be great recovery, but if you feel flat it may be parasympathetic saturation from heavy training load."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 69,
+   "baseline_n": 36,
+   "ln_mean": 3.9930555555555554,
+   "ln_sd": 0.0918949538314403,
+   "ln_week": 3.954285714285714,
+   "hr_mean": 52.34722222222222,
+   "hr_sd": 2.4860164476080557,
+   "z_hrv": -0.6861699465154071,
+   "z_hr": -0.1396701226801233,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 69,
+   "baseline_n": 37,
+   "ln_mean": 3.9913513513513514,
+   "ln_sd": 0.09120069938091249,
+   "ln_week": 3.9414285714285713,
+   "hr_mean": 52.33783783783784,
+   "hr_sd": 2.4519098396682253,
+   "z_hrv": -0.6727070271150967,
+   "z_hr": -0.13778558753349282,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Your 7-day HRV average is below your normal range: accumulated fatigue, consider an easier week.",
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 69,
+   "baseline_n": 38,
+   "ln_mean": 3.9897368421052635,
+   "ln_sd": 0.09050867786094635,
+   "ln_week": 3.9528571428571433,
+   "hr_mean": 52.328947368421055,
+   "hr_sd": 2.4191698257467786,
+   "z_hrv": -0.6600123161343758,
+   "z_hr": -0.13597531058800777,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 69,
+   "baseline_n": 39,
+   "ln_mean": 3.988205128205128,
+   "ln_sd": 0.08982063398127918,
+   "ln_week": 3.9714285714285715,
+   "hr_mean": 52.32051282051282,
+   "hr_sd": 2.3877074985256295,
+   "z_hrv": -0.6480151121763322,
+   "z_hr": -0.13423454117002567,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 69,
+   "baseline_n": 40,
+   "ln_mean": 3.98675,
+   "ln_sd": 0.08913796566602204,
+   "ln_week": 3.992857142857143,
+   "hr_mean": 52.3125,
+   "hr_sd": 2.35744184472959,
+   "z_hrv": -0.636653524409878,
+   "z_hr": -0.13255894337272411,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "moderate",
+   "score": 70,
+   "baseline_n": 41,
+   "ln_mean": 3.9853658536585366,
+   "ln_sd": 0.08846178725799095,
+   "ln_week": 3.982857142857143,
+   "hr_mean": 52.30487804878049,
+   "hr_sd": 2.328298866072845,
+   "z_hrv": -0.6258731071877037,
+   "z_hr": -0.13094455064298818,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Slightly off your normal: train, but keep intensity moderate and see how you feel."
+   ]
+  },
+  {
+   "status": "baseline",
+   "score": null,
+   "baseline_n": 0,
+   "ln_mean": null,
+   "ln_sd": null,
+   "ln_week": 4.0,
+   "hr_mean": null,
+   "hr_sd": null,
+   "z_hrv": null,
+   "z_hr": null,
+   "illness": false,
+   "illness_streak": 0,
+   "low_confidence": false,
+   "notes": [
+    "Building your baseline: 0 of 7 days. Verdicts start once a week of mornings is recorded."
+   ]
+  }
+ ]
+}

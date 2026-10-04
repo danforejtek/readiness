@@ -1,0 +1,69 @@
+[
+ {
+  "hex": "164800043403",
+  "hr": 72,
+  "contact": true,
+  "energy": null,
+  "rr_ms": [
+   1000.0,
+   800.78125
+  ]
+ },
+ {
+  "hex": "092c011000",
+  "hr": 300,
+  "contact": null,
+  "energy": 16,
+  "rr_ms": []
+ },
+ {
+  "hex": "0041",
+  "hr": 65,
+  "contact": null,
+  "energy": null,
+  "rr_ms": []
+ },
+ {
+  "hex": "0038",
+  "hr": 56,
+  "contact": null,
+  "energy": null,
+  "rr_ms": []
+ },
+ {
+  "hex": "10385004",
+  "hr": 56,
+  "contact": null,
+  "energy": null,
+  "rr_ms": [
+   1078.125
+  ]
+ },
+ {
+  "hex": "103a3804d803",
+  "hr": 58,
+  "contact": null,
+  "energy": null,
+  "rr_ms": [
+   1054.6875,
+   960.9375
+  ]
+ },
+ {
+  "hex": "1038b0048804",
+  "hr": 56,
+  "contact": null,
+  "energy": null,
+  "rr_ms": [
+   1171.875,
+   1132.8125
+  ]
+ },
+ {
+  "hex": "00c9",
+  "hr": 201,
+  "contact": null,
+  "energy": null,
+  "rr_ms": []
+ }
+]

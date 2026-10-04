@@ -1,0 +1,14 @@
+Target dependency graph (5 targets)
+Target 'AllIncludingTests' in project 'Aggregate'
+➜ Explicit dependency on target 'HRVCoreTests-product' in project 'HRVCore'
+➜ Explicit dependency on target 'HRVCore_HRVCoreTests' in project 'HRVCore'
+➜ Dependency on target 'HRVCoreTests-product' in project 'HRVCore' via transitive dependency through 'HRVCoreTests-test-runner'
+➜ Explicit dependency on target 'HRVCore-product' in project 'HRVCore'
+➜ Explicit dependency on target 'HRVCore' in project 'HRVCore'
+Target 'HRVCore-product' in project 'HRVCore'
+➜ Explicit dependency on target 'HRVCore' in project 'HRVCore'
+Target 'HRVCoreTests-product' in project 'HRVCore'
+➜ Explicit dependency on target 'HRVCore_HRVCoreTests' in project 'HRVCore'
+➜ Explicit dependency on target 'HRVCore' in project 'HRVCore'
+Target 'HRVCore' in project 'HRVCore' (no dependencies)
+Target 'HRVCore_HRVCoreTests' in project 'HRVCore' (no dependencies)
