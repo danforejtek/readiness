@@ -42,7 +42,7 @@ enum PreviewData {
         guard let m = buffer.metrics() else { return nil }
         return Morning(date: date, metrics: m, spectral: buffer.spectral(), settleS: settleS, rrMs: buffer.values,
                        beatTimes: buffer.beatTimes, allRR: allRR, allElapsed: allElapsed, breakIndices: buffer.breaks,
-                       source: "replay", deviceName: "Elonga-0007631")
+                       source: "replay", deviceName: "Armband-0007631")
     }
 
     /// Synthetic daily records for previews of the assessment views.

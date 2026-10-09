@@ -2,7 +2,7 @@
 
 What the published literature says about each part of the morning-readiness method in `hrmon/readiness.py`
 and `hrmon/hrv.py` (and its Swift port), and where the app departs from it. The app's three numbers copy the
-Elonga/mySASY layout (Regeneration 0–10, Readiness 0–100, Stress 0–10). The Regeneration/Stress composition was
+layout of a commercial HRV app (Regeneration 0–10, Readiness 0–100, Stress 0–10). The Regeneration/Stress composition was
 borrowed from Kubios' PNS/SNS indices. This document looks for grounding that does not depend on Kubios.
 
 Every reference below was checked against PubMed or Crossref (October 2026) unless it is marked **unverified**.
@@ -204,9 +204,10 @@ Mathematically, Mo tracks mean RR (that is, HR), and MxDMn tracks overall variab
 has little information that is independent of HR and SD2. With about 120–150 beats and 50 ms bins, Mo moves in
 50 ms steps (about 5 % of RR) and AMo is coarse.
 
-**App today:** SI with 50 ms bins and a √ transform **matches Kubios**, not Baevsky's original. No resting
-reference range is claimed, which is good. As a Stress component, √SI is **largely redundant** with mean HR and
-SD2, and it is quantised at a 2-minute duration. The evidence does not support it as an independent third component.
+**App today:** SI is computed with 50 ms bins in Baevsky's original form (no square root) and is stored and shown
+for reference only. No resting reference range is claimed, which is good. *Applied 2026-10-09:* √SI was dropped as a
+Stress component because it is **largely redundant** with mean HR and SD2 and quantised at a 2-minute duration; the
+evidence does not support it as an independent third component.
 
 ## I. Alternatives to the Kubios PNS/SNS composition
 
@@ -317,7 +318,7 @@ at the same time. Plews notes that in very fit athletes, supine HRV "saturates" 
 and a standing measurement or the lnRMSSD:RR ratio can help. A full bladder raises muscle sympathetic activity
 and blood pressure (Fagius 1989). That argues for voiding first, or at least doing the same thing every morning.
 
-**App today:** On waking, supine, before coffee and fixed duration all **match**. The Elonga band is an optical
+**App today:** On waking, supine, before coffee and fixed duration all **match**. The band is an optical
 (PPG) armband, so the app measures pulse-rate variability, not HRV. That is acceptable at rest, but RMSSD may read
 slightly high, and motion artefacts matter more (see F). *Applied 2026-10-09:* the Method page now mentions the
 bladder, pulse-rate variability and the 60 s settle period.

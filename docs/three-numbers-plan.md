@@ -1,8 +1,8 @@
-# Plan: Elonga-style features for the Readiness app
+# Plan: the three morning numbers for the Readiness app
 
 ## Context
 
-Dan compared the app with screenshots of the Elonga app (mySASY). Elonga's main screen shows three morning
+Dan compared the app with screenshots of a commercial HRV app. Its main screen shows three morning
 numbers (Regeneration 0–10, Readiness 0–100, Stress 0–10). It also shows "% above average / % since last
 measurement" chips, a week strip with measured days and a completion percentage, and advice text such as
 "Good time for a challenging activity". Further screens show a fitness score with long-range trends, a weekly
@@ -10,7 +10,7 @@ training plan with done ticks and a step goal, trend charts for stress and regen
 helps you".
 
 The goal is to get the same experience from what the band and Apple Health already provide, using published
-methods instead of Elonga's proprietary formulas. "Functional age" is out of scope: there is no sound open
+methods instead of that app's proprietary formulas. "Functional age" is out of scope: there is no sound open
 method behind it.
 
 Current state (end of phase 6): readiness verdict and score, why-rows, glossary, trends (14/30/90 days),
@@ -143,7 +143,7 @@ Verification:
   - Hard sessions are planned only on mornings whose verdict is READY and whose 7-day trend is not below range.
   - Otherwise the plan is moderate or easy. REST days are always easy or off.
   - Weekly targets live in Settings and default to 2 hard, 2 moderate and a 10 000 steps/day goal.
-- The progress ring shows completion of the weekly targets, like Elonga's "80 %, 2 days to go".
+- The progress ring shows completion of the weekly targets, like the commercial app's "80 %, 2 days to go".
 - The plan is recomputed every morning after the measurement. Past days show what was actually done.
 - Pure planning logic goes in HRVCore with unit tests. Python parity is not required because it doesn't
   affect the readiness model.

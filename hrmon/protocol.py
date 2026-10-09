@@ -7,7 +7,7 @@ from __future__ import annotations
 
 SETTLE_S = 60.0          # discarded at the start so the heart settles after lying down (about 1 min in the
                          # studies; Flatt & Esco 2016, docs/evidence.md K)
-DURATION_S = 120.0       # nominal measurement, Elonga's duration
+DURATION_S = 120.0       # nominal measurement
 
 # When the nominal time is up with fewer than MIN_CLEAN_BEATS accepted beats (too many rejected),
 # keep measuring until that many are in or MAX_EXTENSION_S extra seconds have passed, whichever first.

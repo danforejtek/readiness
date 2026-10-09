@@ -1,4 +1,4 @@
-# Plan: "Readiness" iOS app for the Elonga / COOSPO armband
+# Plan: "Readiness" iOS app for a Bluetooth LE heart-rate armband
 
 ## Context
 
@@ -86,7 +86,7 @@ Key decisions:
 
 ## Bluetooth details (from the verified band)
 
-- Scan for service `180D`; the band advertises as `Elonga-0007631`. Remember its `CBPeripheral.identifier`.
+- Scan for service `180D`; the band advertises with its model name and serial. Remember its `CBPeripheral.identifier`.
 - Subscribe to `2A37`; parse flags (bit0 16-bit HR, bit4 RR present, RR in 1/1024 s). Read `2A19` battery,
   `2A29/2A24/2A26/2A28` device info. Ignore vendor service `FD00`.
 - No pairing/bonding; the band accepts one central at a time, so disconnect when the measurement ends.
@@ -123,7 +123,7 @@ intro ──start──▶ connecting ──first sample──▶ settling(60 s)
 - Secondary numbers: RMSSD, SDNN, HF/LF, breathing rate, battery of the band.
 
 **Today, top (phase A)** – week strip and *Today's numbers*: Regeneration (0–10), Readiness, Stress (0–10) rings
-with "% vs average / since last" chips; see `docs/elonga-parity-plan.md`.
+with "% vs average / since last" chips; see `docs/three-numbers-plan.md`.
 
 **Trends** – Swift Charts: `LineMark` lnRMSSD, `AreaMark` normal band (mean ± 0.5 SD computed per day
 from the preceding 60 days), dashed `LineMark` 7-day average, `PointMark` coloured by verdict, `RuleMark`
@@ -180,7 +180,7 @@ spectrum with LF/HF shaded, table of all metrics, notes, delete or retake.
   artefact-filter sensitivity, what-if with alternative `Params`. 30 Python and 14 Swift tests pass. Verified in
   the Simulator: check-in saved and exported, phone export analysed on the Mac. Procedure: `docs/tuning.md`.
   Debug switch `READINESS_EXPORT_TEST=1` writes both export files into the app's Documents folder.
-- Phase A of `docs/elonga-parity-plan.md` done (2026-10-04). **A1 maths:** `hrv.stress_index` (Baevsky,
+- Phase A of `docs/three-numbers-plan.md` done (2026-10-04). **A1 maths:** `hrv.stress_index` (Baevsky,
   50 ms bins on a fixed grid, lowest bin wins a tie, ≥ 30 beats) → `stressIndex(rr:)`; per morning `sd1_ms`,
   `sd2_ms`, `stress_index` in readiness.csv (Mac `_finish_measure`, appended to `ReadinessCSV.columns`, `Morning`
   fields with nil defaults, `csvRow` and import). `readiness.ans_z` / `Readiness.ansZ`: Regeneration z = mean of
@@ -211,7 +211,7 @@ spectrum with LF/HF shaded, table of all metrics, notes, delete or retake.
   (existing verdict fields unchanged). Verified in the iOS 27 Simulator: migration + backfill of an existing
   store (replay morning SD1 69.9 / SD2 84.2 / SI 35.0, identical to Python), Today and Trends in light and dark,
   1-year range, week-strip tap → detail; device build compiles. On-phone checks in `docs/phone-checklist.md`.
-- Next: phase B of `docs/elonga-parity-plan.md` (Apple Health read), alongside the month of mornings with
+- Next: phase B of `docs/three-numbers-plan.md` (Apple Health read), alongside the month of mornings with
   check-ins, then `hrmon analyze` and one-knob-at-a-time changes.
 
 ## Phases
@@ -234,7 +234,7 @@ spectrum with LF/HF shaded, table of all metrics, notes, delete or retake.
 - `swift test` in `Packages/HRVCore` passes the golden fixtures from Python.
 - Simulator: full measurement flow with `ReplayHeartRateSource` on `sessions/2026-10-04_001437.csv`
   ends with the same lnRMSSD 4.59 / HF 4417 ms² / breathing 13 as the Mac run.
-- Device: scan finds `Elonga-…`, live HR updates once per second, RR arrives when worn, measurement
+- Device: scan finds the band, live HR updates once per second, RR arrives when worn, measurement
   completes, row persisted, verdict shown; airplane-mode and band-off error paths show the help sheet.
 - Trends render with 1, 7 and 60 synthetic mornings (baseline progress, first verdicts, full band).
 - Export → import round-trip of `readiness.csv` reproduces identical assessments.
@@ -245,7 +245,7 @@ spectrum with LF/HF shaded, table of all metrics, notes, delete or retake.
   `HeartRateSource` abstraction.
 - **Optical RR quality** at the forearm is lower than a chest strap; the 20 % artefact filter is tuned on
   two sessions only. Keep the beats, so re-filtering later is possible.
-- **Elonga's exact score is proprietary**; this app reproduces the open method, which only becomes
+- **The commercial app's exact score is proprietary**; this app reproduces the open method, which only becomes
   meaningful after a week of mornings. Say so in the UI.
 - **HealthKit HRV is SDNN only**; RMSSD stays in the app.
 - Decide: free Apple ID sideload (re-sign weekly) vs paid developer account (TestFlight, no expiry).
