@@ -35,7 +35,7 @@ DEFAULT_ALTERNATIVES = [
     "w_hrv=0.5,w_hr=0.5",                     # HR as important as HRV
     "illness_z_hr=1.0,illness_bpm=3",         # earlier illness warning
     "baseline_days=30",                       # faster-adapting baseline
-    "low_quality_artefact_pct=10",            # stricter quality flag
+    "low_quality_artefact_pct=15",            # the old, looser quality flag
 ]
 
 
@@ -209,7 +209,8 @@ def quality(records: list[DayRecord], p: Params) -> Section:
     ]
     note = ""
     if arts and quantile(arts, .9) > p.low_quality_artefact_pct:
-        note = "More than one morning in ten is noisy: check band position before tuning the model."
+        note = (f"More than one morning in ten has over {p.low_quality_artefact_pct:g} % rejected beats and is marked "
+                "low confidence: check band position before tuning the model.")
     return Section("Signal quality", ["", ""], rows, note)
 
 

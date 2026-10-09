@@ -5,6 +5,11 @@ Method (Plews & Buchheit; Altini / HRV4Training):
   * baseline = mean and SD over the previous `baseline_days` (default 60) days, excluding today; low-quality
     mornings are left out of it (and of the 7-day average) once at least `min_baseline_days` clean ones exist
   * normal range = mean ± 0.5 SD (the "smallest worthwhile change")
+  * verdicts start after `min_baseline_days` (7) mornings, but stay provisional until the baseline holds
+    `firm_baseline_days` (14): Plews built the normal range from two weeks of mornings (Plews 2012/2014;
+    docs/evidence.md, sections A and B). Provisional only adds a note; the verdict rules are the same
+  * a morning is low quality (low confidence) above `low_quality_artefact_pct` (5 %) rejected beats or below
+    `low_quality_beats` (60) clean ones; many studies exclude recordings above about 5 % (docs/evidence.md, F)
   * 7-day rolling average of lnRMSSD shows accumulated fatigue when it drops below the normal range; it only
     counts towards the verdict with at least `week_min_days` (3) mornings in the window (Plews 2014)
   * today's z-scores drive the verdict. A single morning's HRV only counts from −1 SD (`moderate_z_hrv`), not
@@ -70,8 +75,9 @@ class Params:
     illness_min_days: int = 2        # flagged mornings in a row before the illness warning (one alone is a note)
     week_min_days: int = 3           # the 7-day average needs this many mornings before it can flag fatigue
     saturation_z: float = 1.5        # note when HRV z ≥ this and HR z ≤ −this
-    low_quality_artefact_pct: float = 15.0
-    low_quality_beats: int = 60
+    firm_baseline_days: int = 14     # verdicts with fewer baseline mornings are provisional (Plews 2014)
+    low_quality_artefact_pct: float = 5.0   # low confidence above this % of rejected beats (was 15 until 2026-10-09)
+    low_quality_beats: int = 60             # … or below this many clean beats
     # Regeneration / Stress (0–10): value = clip(index_center + index_scale · z, 0, 10).
     # Regeneration z = z(lnRMSSD) with ln_sd_floor; Stress z = weighted mean of z(resting HR) (hr_sd_floor) and
     # −z(ln SD2) (ln_sd2_sd_floor) over the components that are present.
@@ -141,6 +147,7 @@ class Assessment:
     illness_signal: bool = False     # today's morning alone matches the illness pattern
     illness_streak: int = 0          # flagged mornings in a row up to today (0 when today is not flagged)
     low_confidence: bool = False
+    provisional: bool = False        # a verdict, but from fewer than firm_baseline_days baseline mornings
     notes: list[str] = field(default_factory=list)
     range_sd: float = 0.5
     regeneration: Optional[float] = None   # 0–10, 5 = your normal; your HRV (lnRMSSD), high = better recovered
@@ -353,6 +360,7 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
 
     composite = p.w_hrv * a.z_hrv - p.w_hr * a.z_hr
     a.score = int(max(0, min(100, round(75 + 15 * composite))))
+    a.provisional = a.baseline_n < p.firm_baseline_days
 
     # illness / systemic stress: raised resting HR together with suppressed HRV; one morning is a signal, the
     # warning needs illness_min_days of them in a row
@@ -399,11 +407,15 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
         a.notes.append("HRV is unusually high and resting HR unusually low. Usually that means good recovery. "
                        "If you still feel flat or heavy-legged, it can be a sign of overreaching after a hard "
                        "training block.")
+    if a.provisional:
+        a.notes.append(f"Your normal range is still settling: it rests on {a.baseline_n} mornings and is firm after "
+                       f"{p.firm_baseline_days}. Treat the verdict as a first indication.")
     if a.low_confidence:
         a.notes.append(f"Noisy reading ({today.artefact_pct:.0f} % of beats rejected, {today.beats} clean beats). "
                        "Treat today's verdict with caution. Next time check that the sensor sits snugly with "
                        "good skin contact and keep still.")
-    if a.status == READY and not a.notes:
+    # the provisional note alone does not replace the all-clear
+    if a.status == READY and len(a.notes) == int(a.provisional):
         a.notes.append("HRV and resting HR are within your normal range. A good day for a hard session.")
     elif a.status == MODERATE and not a.illness:
         a.notes.append("Slightly off your normal. Training is fine, but keep the intensity moderate "

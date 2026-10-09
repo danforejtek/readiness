@@ -8,10 +8,12 @@ struct TodayNumbersCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
+            HStack(spacing: 8) {
                 Text(isToday ? "Today's numbers" : "Last measurement").font(.headline)
-                Spacer()
+                if assessment.provisional { Badge.provisional }
+                Spacer(minLength: 4)
                 Text(Fmt.dayTime.string(from: assessment.record.when)).font(.caption).foregroundStyle(.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.8)
             }
             HStack(alignment: .top, spacing: 8) {
                 IndexColumn(title: "Regeneration", info: .regeneration, value: assessment.regeneration,

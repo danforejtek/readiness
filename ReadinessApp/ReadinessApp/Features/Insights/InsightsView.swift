@@ -316,7 +316,7 @@ private struct SignalCard: View {
 
     private var interpretation: String {
         var parts: [String] = []
-        if signal.p90ArtefactPct > 15 {
+        if signal.p90ArtefactPct > Readiness.lowQualityArtefactPct {
             parts.append("More than one morning in ten is noisy: check how the sensor sits before reading too much into the verdicts.")
         }
         if let cv = signal.lnCV {

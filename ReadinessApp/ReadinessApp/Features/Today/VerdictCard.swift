@@ -21,13 +21,10 @@ struct VerdictCard: View {
                 Text(status.subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                HStack(spacing: 8) {
-                    if assessment.illness {
-                        Badge(text: "Possible illness", color: Palette.alert, symbol: "thermometer.medium")
-                    }
-                    if assessment.lowConfidence {
-                        Badge(text: "Low confidence", color: Palette.caution, symbol: "exclamationmark.triangle")
-                    }
+                // up to three badges: side by side when they fit, stacked otherwise
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { badges }
+                    VStack(alignment: .leading, spacing: 6) { badges }
                 }
                 Text(Fmt.dayTime.string(from: assessment.record.when))
                     .font(.caption)
@@ -43,12 +40,27 @@ struct VerdictCard: View {
         .background(status.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(status.color.opacity(0.5), lineWidth: 1))
     }
+
+    @ViewBuilder private var badges: some View {
+        if assessment.illness {
+            Badge(text: "Possible illness", color: Palette.alert, symbol: "thermometer.medium")
+        }
+        if assessment.lowConfidence {
+            Badge(text: "Low confidence", color: Palette.caution, symbol: "exclamationmark.triangle")
+        }
+        if assessment.provisional {
+            Badge.provisional
+        }
+    }
 }
 
 struct Badge: View {
     let text: String
     let color: Color
     let symbol: String
+
+    /// The verdict rests on fewer than `Readiness.firmBaselineDays` baseline mornings.
+    static let provisional = Badge(text: "Provisional", color: Palette.calm, symbol: "hourglass")
 
     var body: some View {
         Label(text, systemImage: symbol)

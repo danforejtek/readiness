@@ -59,6 +59,51 @@ class ReadinessTests(unittest.TestCase):
         a = assess(make_history(8))
         self.assertIsNotNone(a.score)
 
+    def test_verdicts_are_provisional_until_fourteen_baseline_mornings(self):
+        self.assertEqual(Params().min_baseline_days, 7)
+        self.assertEqual(Params().firm_baseline_days, 14)
+        out = assess_all(make_history(16))
+        # baseline-building days have no verdict, so they are not provisional
+        for a in out[:7]:
+            self.assertEqual(a.status, BASELINE)
+            self.assertFalse(a.provisional)
+            self.assertFalse(any("still settling" in n for n in a.notes))
+        # day 8: the first verdict, from 7 baseline mornings
+        a = out[7]
+        self.assertIsNotNone(a.score)
+        self.assertEqual(a.baseline_n, 7)
+        self.assertTrue(a.provisional)
+        self.assertIn("Your normal range is still settling: it rests on 7 mornings and is firm after 14. "
+                      "Treat the verdict as a first indication.", a.notes)
+        self.assertTrue(all(o.provisional for o in out[7:14]))
+        # day 15: 14 baseline mornings, firm
+        a = out[14]
+        self.assertEqual(a.baseline_n, 14)
+        self.assertFalse(a.provisional)
+        self.assertFalse(any("still settling" in n for n in a.notes))
+        self.assertFalse(out[15].provisional)
+
+    def test_provisional_changes_no_verdict_and_keeps_the_note_order(self):
+        recs = make_history(10)
+        for p in (Params(), Params(firm_baseline_days=7)):
+            a = assess(recs, params=p)
+            self.assertEqual(a.provisional, p.firm_baseline_days == 14)
+        firm = assess(recs, params=Params(firm_baseline_days=7))
+        prov = assess(recs)
+        self.assertEqual((prov.status, prov.score), (firm.status, firm.score))
+        # a READY day keeps its all-clear after the provisional note
+        self.assertEqual(prov.status, READY)
+        self.assertTrue(prov.notes[0].startswith("Your normal range is still settling: it rests on 9 mornings"))
+        self.assertEqual(prov.notes[1:], firm.notes)
+        # illness note first, then the 7-day note, provisional, quality, and the advice last
+        recs = add_day(make_history(10), ln=3.60, hr=62.0, beats=50, artefacts=9.0)
+        a = assess(recs)
+        self.assertTrue(a.provisional and a.illness_signal and a.low_confidence)
+        kinds = [("illness" if n.startswith("Resting HR") else "week" if n.startswith("Your 7-day")
+                  else "provisional" if "still settling" in n else "quality" if n.startswith("Noisy reading")
+                  else "advice") for n in a.notes]
+        self.assertEqual(kinds, ["illness", "week", "provisional", "quality", "advice"])
+
     def test_normal_day_is_ready(self):
         recs = add_day(make_history(), ln=4.02, hr=52.5)
         a = assess(recs)
@@ -237,6 +282,30 @@ class ReadinessTests(unittest.TestCase):
         a = assess(recs)
         self.assertTrue(a.low_confidence)
         self.assertIsNotNone(a.score)                  # a noisy morning still gets a verdict
+        # low confidence above 5 % rejected beats (it was 15 %), or below 60 clean beats
+        self.assertEqual(Params().low_quality_artefact_pct, 5.0)
+        self.assertEqual(Params().low_quality_beats, 60)
+        for artefacts, beats, low in ((5.0, 120, False), (5.1, 120, True), (8.0, 120, True), (14.0, 120, True),
+                                      (2.0, 60, False), (2.0, 59, True)):
+            a = assess(add_day(make_history(), ln=4.0, hr=52.0, beats=beats, artefacts=artefacts))
+            self.assertEqual(a.low_confidence, low, (artefacts, beats))
+            self.assertEqual(any(n.startswith("Noisy reading") for n in a.notes), low, (artefacts, beats))
+        # the old limit is still available as a parameter
+        recs = add_day(make_history(), ln=4.0, hr=52.0, artefacts=8.0)
+        self.assertFalse(assess(recs, params=Params(low_quality_artefact_pct=15.0)).low_confidence)
+
+    def test_morning_between_five_and_fifteen_percent_stays_out_of_the_baseline(self):
+        # 8 % rejected beats was a clean morning under the old 15 % limit; now it is left out like any noisy one
+        clean = add_day(make_history(), ln=4.0, hr=52.0)
+        fair = make_history()
+        add_day(fair, ln=4.6, hr=49.0, artefacts=8.0)
+        fair = add_day(fair, ln=4.0, hr=52.0)
+        a, b = assess(clean), assess(fair)
+        self.assertEqual(b.baseline_n, 20)
+        self.assertEqual((b.ln_mean, b.ln_sd, b.hr_mean, b.hr_sd), (a.ln_mean, a.ln_sd, a.hr_mean, a.hr_sd))
+        old = assess(fair, params=Params(low_quality_artefact_pct=15.0))
+        self.assertEqual(old.baseline_n, 21)
+        self.assertGreater(old.ln_mean, a.ln_mean)
 
     def test_noisy_morning_stays_out_of_the_baseline(self):
         clean = add_day(make_history(), ln=4.0, hr=52.0)

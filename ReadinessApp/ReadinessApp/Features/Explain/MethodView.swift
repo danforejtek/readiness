@@ -15,7 +15,8 @@ struct MethodView: View {
                 Para("Each morning gives two numbers: lnRMSSD, your heart rate variability, and resting heart rate.")
                 Para("Your normal is the average of the previous 60 days, today excluded. Your normal range is that average plus or minus half a standard deviation. Sports scientists use this band as the smallest change that matters.")
                 Para("The app needs \(Readiness.minBaselineDays) mornings before it gives verdicts. It keeps learning for two months, so the range adapts to fitness changes.")
-                Para("Noisy mornings, the ones marked low confidence, are left out of your average and range once there are seven clean mornings, so one bad reading does not shift your normal.")
+                Para("Verdicts are provisional from \(Readiness.minBaselineDays) to \(Readiness.firmBaselineDays) mornings and firm from \(Readiness.firmBaselineDays), because the studies this method follows built the normal range from two weeks of mornings (Plews and colleagues, 2014).")
+                Para("Noisy mornings, the ones marked low confidence (more than \(Int(Readiness.lowQualityArtefactPct)) % of beats rejected or fewer than \(Readiness.lowQualityBeats) clean beats), are left out of your average and range once there are seven clean mornings, so one bad reading does not shift your normal.")
                 Para("The 7-day HRV average can flag fatigue only once at least \(Readiness.weekMinDays) mornings fall in the seven days. A study of how often athletes need to measure (Plews and colleagues, 2014) found that three mornings a week reproduce the weekly picture; fewer can mislead.")
             }
             Section("The verdict") {

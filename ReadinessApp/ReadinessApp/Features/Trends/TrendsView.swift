@@ -38,7 +38,7 @@ struct TrendsView: View {
                                                description: Text("Trends appear after your first measurements."))
                     } else {
                         if let s = selected(in: days) { SelectedDayCard(day: s) }
-                        ChartCard(title: "HRV (lnRMSSD)", subtitle: "green band = your normal range · dashed = 7-day average") {
+                        ChartCard(title: "HRV (lnRMSSD)", subtitle: "green band = your normal range · dashed = 7-day average · hollow = provisional verdict") {
                             HRVChart(days: days, selection: $selectedDay)
                         }
                         ChartCard(title: "Resting heart rate", subtitle: "bpm · green band = your normal range") {
@@ -136,6 +136,7 @@ struct HRVChart: View {
                     .interpolationMethod(.monotone)
                 PointMark(x: .value("Day", d.day), y: .value("lnRMSSD", d.assessment.record.lnRMSSD))
                     .foregroundStyle(d.assessment.status.color)
+                    .symbol(d.assessment.pointShape)
                     .symbolSize(d.assessment.illness ? 90 : days.pointSize)
             }
             if let selection {
@@ -167,6 +168,7 @@ struct HRChart: View {
                     .interpolationMethod(.monotone)
                 PointMark(x: .value("Day", d.day), y: .value("HR", d.assessment.record.meanHR))
                     .foregroundStyle(d.assessment.illness ? Palette.alert : d.assessment.status.color)
+                    .symbol(d.assessment.pointShape)
                     .symbolSize(d.assessment.illness ? 90 : days.pointSize)
             }
             if let selection {
@@ -201,6 +203,7 @@ struct IndexChart: View {
                         .interpolationMethod(.monotone)
                     PointMark(x: .value("Day", d.day), y: .value("Value", v))
                         .foregroundStyle(IndexLevel(value: v, direction: direction).color)
+                        .symbol(d.assessment.pointShape)
                         .symbolSize(days.pointSize)
                 }
             }
@@ -212,6 +215,13 @@ struct IndexChart: View {
         .chartYAxis { AxisMarks(values: [0, 2, 4, 6, 8, 10]) }
         .chartXSelection(value: $selection)
         .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) { _ in AxisGridLine(); AxisValueLabel(format: .dateTime.day().month(.abbreviated)) } }
+    }
+}
+
+extension Assessment {
+    /// Hollow points for provisional verdicts (fewer than `Readiness.firmBaselineDays` baseline mornings).
+    var pointShape: AnyChartSymbolShape {
+        provisional ? AnyChartSymbolShape(.circle.strokeBorder(lineWidth: 2)) : AnyChartSymbolShape(.circle)
     }
 }
 

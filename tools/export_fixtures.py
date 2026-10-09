@@ -201,6 +201,7 @@ def assess_json(a):
     return {"status": a.status, "score": a.score, "baseline_n": a.baseline_n, "ln_mean": a.ln_mean, "ln_sd": a.ln_sd,
             "ln_week": a.ln_week, "week_n": a.week_n, "hr_mean": a.hr_mean, "hr_sd": a.hr_sd, "z_hrv": a.z_hrv, "z_hr": a.z_hr,
             "illness": a.illness, "illness_signal": a.illness_signal, "illness_streak": a.illness_streak, "low_confidence": a.low_confidence,
+            "provisional": a.provisional,
             "notes": a.notes, "regeneration": a.regeneration, "stress": a.stress, "z_regeneration": a.z_regeneration,
             "z_stress": a.z_stress, "ln_change": change_json(a.ln_change), "hr_change": change_json(a.hr_change),
             "regeneration_change": change_json(a.regeneration_change), "stress_change": change_json(a.stress_change)}

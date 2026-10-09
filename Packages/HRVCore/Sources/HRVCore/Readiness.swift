@@ -5,7 +5,10 @@ import Foundation
 /// Baseline = mean/SD of lnRMSSD and resting HR over the previous `baselineDays` (excluding today; low-quality
 /// mornings left out once at least `minBaselineDays` clean ones exist), normal range = mean ± 0.5 SD,
 /// 7-day rolling lnRMSSD average (flags fatigue only with at least `weekMinDays` mornings, Plews 2014),
-/// z-scores drive the verdict. A single morning's HRV only counts from −1 SD (`moderateZHRV`), not from the edge of the
+/// z-scores drive the verdict. Verdicts start after `minBaselineDays` mornings but stay `provisional` until the
+/// baseline holds `firmBaselineDays` (Plews 2012/2014; evidence.md A and B); that only adds a note. A morning is low
+/// quality above `lowQualityArtefactPct` rejected beats or below `lowQualityBeats` clean ones (evidence.md F).
+/// A single morning's HRV only counts from −1 SD (`moderateZHRV`), not from the edge of the
 /// ±0.5 SD range: the HRV-guided training trials acted on the 7-day average or on single-day drops of at least 1 SD
 /// (Kiviniemi 2007; Plews 2012/2013; docs/evidence.md, sections A and L).
 /// A raised resting HR with suppressed HRV often precedes an infection, but alcohol, poor sleep, travel and stress
@@ -47,7 +50,7 @@ public struct DayRecord: Equatable, Sendable {
         self.meanRR = meanRR; self.sd1 = sd1; self.sd2 = sd2; self.stressIndex = stressIndex
     }
 
-    public var lowQuality: Bool { artefactPct > 15.0 || beats < 60 }
+    public var lowQuality: Bool { artefactPct > Readiness.lowQualityArtefactPct || beats < Readiness.lowQualityBeats }
     public var day: Date { Readiness.calendar.startOfDay(for: when) }
 }
 
@@ -85,6 +88,8 @@ public struct Assessment: Equatable, Sendable {
     /// Flagged mornings in a row up to today (0 when today is not flagged).
     public var illnessStreak = 0
     public var lowConfidence = false
+    /// A verdict, but from fewer than `Readiness.firmBaselineDays` baseline mornings.
+    public var provisional = false
     public var notes: [String] = []
     /// 0–10, 5 = your normal. Regeneration is your HRV (lnRMSSD), high = better recovered than usual; Stress is
     /// strain / load (mostly resting HR, partly SD2), high = more strain than usual.
@@ -115,6 +120,11 @@ public struct Assessment: Equatable, Sendable {
 
 public enum Readiness {
     public static let minBaselineDays = 7
+    /// Verdicts with fewer baseline mornings than this are provisional (Plews 2014: a two-week baseline).
+    public static let firmBaselineDays = 14
+    /// Low confidence above this % of rejected beats (15 until 2026-10-09), or below `lowQualityBeats` clean beats.
+    public static let lowQualityArtefactPct = 5.0
+    public static let lowQualityBeats = 60
     public static let lnSDFloor = 0.05
     public static let hrSDFloor = 1.5
     public static let illnessBpm = 4.0
@@ -273,6 +283,7 @@ public enum Readiness {
 
         let composite = 0.65 * zHRV - 0.35 * zHR
         a.score = Int(max(0, min(100, (75 + 15 * composite).rounded())))
+        a.provisional = a.baselineN < firmBaselineDays
 
         // one morning is a signal, the warning needs `illnessMinDays` of them in a row
         a.illnessSignal = illnessRule(hrGap: today.meanHR - hrMean, zHRV: zHRV, zHR: zHR)
@@ -315,10 +326,14 @@ public enum Readiness {
         if zHRV >= 1.5 && zHR <= -1.5 {
             a.notes.append("HRV is unusually high and resting HR unusually low. Usually that means good recovery. If you still feel flat or heavy-legged, it can be a sign of overreaching after a hard training block.")
         }
+        if a.provisional {
+            a.notes.append("Your normal range is still settling: it rests on \(a.baselineN) mornings and is firm after \(firmBaselineDays). Treat the verdict as a first indication.")
+        }
         if a.lowConfidence {
             a.notes.append("Noisy reading (\(f0(today.artefactPct)) % of beats rejected, \(today.beats) clean beats). Treat today's verdict with caution. Next time check that the sensor sits snugly with good skin contact and keep still.")
         }
-        if a.status == .ready && a.notes.isEmpty {
+        // the provisional note alone does not replace the all-clear
+        if a.status == .ready && a.notes.count == (a.provisional ? 1 : 0) {
             a.notes.append("HRV and resting HR are within your normal range. A good day for a hard session.")
         } else if a.status == .moderate && !a.illness {
             a.notes.append("Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body.")

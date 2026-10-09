@@ -95,6 +95,10 @@ Elonga's score comes from a short resting HRV reading every morning compared wit
 
 - Baseline = mean and SD of **lnRMSSD** and **resting HR** over the previous 60 days (needs at least 7
   mornings; until then it reports "building baseline").
+- Verdicts are **provisional** while the baseline holds 7 to 13 mornings and firm from 14 (`firm_baseline_days`):
+  Plews built the normal range from two weeks of mornings (Plews 2012/2014; evidence.md A and B). A provisional
+  verdict follows the same rules; it only adds a note ("Your normal range is still settling …") and a
+  "Provisional" badge in the app.
 - Normal range = mean ± 0.5 SD. The 7-day rolling lnRMSSD average is compared against it as well, because a
   slow drift below the range means accumulated fatigue even when single days look fine. It is always shown, but
   it can only flag fatigue once at least 3 mornings fall in the 7 days (`week_min_days`): Plews et al. 2014 found
@@ -119,7 +123,8 @@ Elonga's score comes from a short resting HRV reading every morning compared wit
   travel and stress produce the same pattern, and the published detectors use multi-day logic (Mishra 2020,
   Alavi 2022, Altini & Plews 2021; evidence.md C). The thresholds are heuristics, not taken from a study, for
   training decisions, not a diagnosis.
-- Measurements with > 15 % artefacts or < 60 beats are marked low confidence. They still get a verdict, but
+- Measurements with > 5 % artefacts or < 60 beats are marked low confidence (15 % until 2026-10-09; many studies
+  exclude recordings above about 5 %, evidence.md F). They still get a verdict, but
   once the 60-day window holds at least 7 clean mornings, low-confidence mornings are left out of the baseline
   (mean, SD, number of mornings) and of the 7-day average of later days; until then every morning counts.
 - **Regeneration and Stress (0–10, 5 = your normal)**, both against the same 60-day, clean-only baseline as the

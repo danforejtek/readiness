@@ -159,9 +159,12 @@ Lipponen. Two departures:
 
 - **Rejected beats are dropped, and successive differences are computed across the gap.** This inflates RMSSD
   slightly whenever there are artefacts. Proper practice either skips those differences or interpolates the beat.
+  *Applied earlier:* differences that span a rejected beat are now skipped by RMSSD, pNN50 and SD1.
 - **The 15 % artefact limit for "low confidence" is lenient** for a 2-minute PPG recording. Clifford shows the
   error growing linearly with the artefact rate. Many studies exclude recordings above about 5 %, but no single
-  validated cut-off was verified.
+  validated cut-off was verified. *Applied 2026-10-09:* the limit is now 5 % (`low_quality_artefact_pct`); the
+  60-clean-beats rule stays. Low-confidence mornings are also left out of the baseline, so mornings between 5 and
+  15 % no longer shape your normal range.
 
 ## G. Poincaré SD1/SD2 and how they relate to RMSSD/SDNN
 
@@ -380,7 +383,8 @@ Ranked by strength of evidence, strongest first.
 5. **Fix the RMSSD-across-gaps artefact handling.** Drop successive differences that span a rejected beat, or
    interpolate it as Kubios and Lipponen do. Lower the low-confidence threshold from 15 % towards 5 %
    (Clifford 2005, Lipponen 2019, Shaffer 2020; moderate; the 5 % figure is common practice, not a validated
-   cut-off).
+   cut-off). **Applied:** skipping the differences across a rejected beat earlier; the threshold lowered to 5 %
+   on 2026-10-09.
 6. **Change the CV note from "3–8 %" to "about 3–13 % (most people 4–8 %)"** and compute it as a weekly CV, as in
    the literature, not over the whole history (Bellenger 2022, Flatt & Esco 2015, Plews 2014; moderate).
 7. **Reword the illness warning** (Mishra 2020, Alavi 2022, Altini & Plews 2021, Mason 2022; moderate).
@@ -392,7 +396,8 @@ Ranked by strength of evidence, strongest first.
      `hrmon analyze` against `sick` tags.
 8. **Require at least 3 of 7 mornings for the 7-day average to count, and at least 14 baseline days before giving
    a verdict** (Plews 2014 compliance, Flatt & Esco 2015; Plews used a 2-week baseline, Javaloyes 4 weeks;
-   moderate). The current minimum is 7 days.
+   moderate). The current minimum is 7 days. *Partly applied 2026-10-09:* verdicts still start after 7 baseline
+   mornings, but are marked provisional until the baseline holds 14.
 9. **Protocol text** (Fagius 1989, Flatt & Esco 2016, Schäfer & Vagedes 2013; weak to moderate).
    - Add "empty your bladder first, or always do the same".
    - Lengthen the settle period from 15 s to about 60 s. **Applied 2026-10-09** (all three points of this item).

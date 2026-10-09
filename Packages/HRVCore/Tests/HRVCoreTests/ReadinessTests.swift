@@ -18,7 +18,7 @@ struct PyAssessment: Decodable {
     let status: String; let score: Int?; let baseline_n: Int; let ln_mean: Double?; let ln_sd: Double?; let ln_week: Double?
     let week_n: Int
     let hr_mean: Double?; let hr_sd: Double?; let z_hrv: Double?; let z_hr: Double?; let illness: Bool
-    let illness_signal: Bool; let illness_streak: Int; let low_confidence: Bool; let notes: [String]
+    let illness_signal: Bool; let illness_streak: Int; let low_confidence: Bool; let provisional: Bool; let notes: [String]
     let regeneration: Double?; let stress: Double?; let z_regeneration: Double?; let z_stress: Double?
     /// [vs average %, vs last %]
     let ln_change: [Double?]; let hr_change: [Double?]; let regeneration_change: [Double?]; let stress_change: [Double?]
@@ -52,6 +52,7 @@ final class ReadinessTests: XCTestCase {
             XCTAssertEqual(a.illnessSignal, py.illness_signal, ctx)
             XCTAssertEqual(a.illnessStreak, py.illness_streak, ctx)
             XCTAssertEqual(a.lowConfidence, py.low_confidence, ctx)
+            XCTAssertEqual(a.provisional, py.provisional, ctx)
             XCTAssertEqual(a.notes, py.notes, ctx)
             for (mine, ref) in [(a.lnMean, py.ln_mean), (a.lnSD, py.ln_sd), (a.lnWeek, py.ln_week), (a.hrMean, py.hr_mean),
                                 (a.hrSD, py.hr_sd), (a.zHRV, py.z_hrv), (a.zHR, py.z_hr),
@@ -84,6 +85,11 @@ final class ReadinessTests: XCTestCase {
         })
         // resting HR z ≥ 2.5 but less than 4 bpm up is not an illness warning
         XCTAssertTrue(fx.assessments.contains { ($0.z_hr ?? 0) >= 2.5 && !$0.illness })
+        // verdicts from 7 to 13 baseline mornings are provisional, from 14 firm; baseline days are neither
+        XCTAssertTrue(fx.assessments.contains { $0.provisional && $0.score != nil && $0.baseline_n == Readiness.minBaselineDays })
+        XCTAssertTrue(fx.assessments.contains { !$0.provisional && $0.score != nil && $0.baseline_n == Readiness.firmBaselineDays })
+        XCTAssertTrue(fx.assessments.allSatisfy { $0.provisional == ($0.score != nil && $0.baseline_n < Readiness.firmBaselineDays) })
+        XCTAssertTrue(fx.assessments.contains { $0.provisional && $0.notes.contains("Your normal range is still settling: it rests on 7 mornings and is firm after 14. Treat the verdict as a first indication.") })
         // after a noisy morning the baseline leaves it out
         XCTAssertTrue(zip(fx.assessments, fx.assessments.dropFirst()).contains { $0.low_confidence && $1.baseline_n == $0.baseline_n })
         // … and the 0–10 indices: clipped at both ends, and Stress present on a day without SD2 (resting HR alone)
@@ -157,6 +163,20 @@ final class ReadinessTests: XCTestCase {
         var gap = records
         gap.remove(at: 55)
         XCTAssertEqual(Readiness.assess(gap).illnessStreak, 4)
+    }
+
+    func testLowQualityThreshold() throws {
+        XCTAssertEqual(Readiness.lowQualityArtefactPct, 5.0)
+        XCTAssertEqual(Readiness.lowQualityBeats, 60)
+        let when = try XCTUnwrap(Self.fmt.date(from: "2026-10-04 07:00"))
+        func rec(_ pct: Double, _ beats: Int) -> DayRecord {
+            DayRecord(when: when, lnRMSSD: 4, rmssd: 55, meanHR: 52, sdnn: 60, beats: beats, artefactPct: pct)
+        }
+        XCTAssertFalse(rec(5.0, 120).lowQuality)
+        XCTAssertTrue(rec(5.1, 120).lowQuality)
+        XCTAssertTrue(rec(14, 120).lowQuality)     // clean under the old 15 % limit
+        XCTAssertFalse(rec(2, 60).lowQuality)
+        XCTAssertTrue(rec(2, 59).lowQuality)
     }
 
     func testRangesDerivedFromBaseline() throws {

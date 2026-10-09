@@ -882,6 +882,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Building your baseline: 1 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
@@ -922,6 +923,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Building your baseline: 2 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
@@ -962,6 +964,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Building your baseline: 3 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
@@ -1002,6 +1005,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Building your baseline: 4 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
@@ -1042,6 +1046,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Building your baseline: 5 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
@@ -1082,6 +1087,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Building your baseline: 6 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
@@ -1122,6 +1128,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Baseline complete: 7 mornings recorded. Your first verdict comes with the next morning."
    ],
@@ -1162,7 +1169,9 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": true,
    "notes": [
+    "Your normal range is still settling: it rests on 7 mornings and is firm after 14. Treat the verdict as a first indication.",
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 8.1,
@@ -1202,7 +1211,9 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": true,
    "notes": [
+    "Your normal range is still settling: it rests on 8 mornings and is firm after 14. Treat the verdict as a first indication.",
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
    "regeneration": 3.8,
@@ -1242,7 +1253,9 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": true,
    "notes": [
+    "Your normal range is still settling: it rests on 9 mornings and is firm after 14. Treat the verdict as a first indication.",
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 6.4,
@@ -1282,7 +1295,9 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": true,
    "notes": [
+    "Your normal range is still settling: it rests on 10 mornings and is firm after 14. Treat the verdict as a first indication.",
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
    "regeneration": 2.3,
@@ -1322,7 +1337,9 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": true,
    "notes": [
+    "Your normal range is still settling: it rests on 11 mornings and is firm after 14. Treat the verdict as a first indication.",
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 5.2,
@@ -1362,7 +1379,9 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": true,
    "notes": [
+    "Your normal range is still settling: it rests on 12 mornings and is firm after 14. Treat the verdict as a first indication.",
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 8.0,
@@ -1402,7 +1421,9 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": true,
    "notes": [
+    "Your normal range is still settling: it rests on 13 mornings and is firm after 14. Treat the verdict as a first indication.",
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
    "regeneration": 3.7,
@@ -1442,6 +1463,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -1482,6 +1504,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
@@ -1522,6 +1545,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -1562,6 +1586,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -1602,6 +1627,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
@@ -1642,6 +1668,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -1682,6 +1709,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
@@ -1722,6 +1750,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -1762,6 +1791,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -1802,6 +1832,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
@@ -1842,6 +1873,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -1882,6 +1914,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
@@ -1922,6 +1955,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -1962,6 +1996,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2002,6 +2037,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
@@ -2042,6 +2078,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2082,6 +2119,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2122,6 +2160,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Clearly off your normal. Make it a recovery day with easy movement only."
    ],
@@ -2162,6 +2201,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Clearly off your normal. Make it a recovery day with easy movement only."
    ],
@@ -2202,6 +2242,7 @@
    "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 8 bpm above your normal and HRV is below your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
@@ -2244,6 +2285,7 @@
    "illness_signal": true,
    "illness_streak": 2,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 9 bpm above your normal and HRV is below your normal for 2 days in a row. This pattern often appears one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. Take it easy, drink enough, and watch for symptoms.",
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week."
@@ -2285,6 +2327,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": true,
+   "provisional": false,
    "notes": [
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
     "Noisy reading (25 % of beats rejected, 40 clean beats). Treat today's verdict with caution. Next time check that the sensor sits snugly with good skin contact and keep still.",
@@ -2327,6 +2370,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV is unusually high and resting HR unusually low. Usually that means good recovery. If you still feel flat or heavy-legged, it can be a sign of overreaching after a hard training block."
    ],
@@ -2367,6 +2411,7 @@
    "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 9 bpm above your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
     "Clearly off your normal. Make it a recovery day with easy movement only."
@@ -2408,6 +2453,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
@@ -2449,6 +2495,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2489,6 +2536,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2529,6 +2577,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2569,6 +2618,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2609,6 +2659,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2649,6 +2700,7 @@
    "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 8 bpm above your normal and HRV is below your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
@@ -2691,6 +2743,7 @@
    "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 9 bpm above your normal and HRV is below your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
@@ -2733,6 +2786,7 @@
    "illness_signal": true,
    "illness_streak": 2,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 8 bpm above your normal and HRV is below your normal for 2 days in a row. This pattern often appears one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. Take it easy, drink enough, and watch for symptoms.",
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week."
@@ -2774,6 +2828,7 @@
    "illness_signal": true,
    "illness_streak": 3,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 8 bpm above your normal and HRV is below your normal for 3 days in a row. This pattern often appears one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. Take it easy, drink enough, and watch for symptoms.",
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week."
@@ -2815,6 +2870,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Clearly off your normal. Make it a recovery day with easy movement only."
    ],
@@ -2855,6 +2911,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
@@ -2895,6 +2952,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
@@ -2936,6 +2994,7 @@
    "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 11 bpm above your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
     "Clearly off your normal. Make it a recovery day with easy movement only."
@@ -2977,6 +3036,7 @@
    "illness_signal": true,
    "illness_streak": 2,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Resting HR is 11 bpm above your normal for 2 days in a row, far outside your usual range. Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this. Take it easy and watch for symptoms."
    ],
@@ -3017,6 +3077,7 @@
    "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
+   "provisional": false,
    "notes": [
     "Building your baseline: 1 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
