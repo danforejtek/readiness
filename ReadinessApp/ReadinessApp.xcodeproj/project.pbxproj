@@ -39,6 +39,7 @@
 		B613CF8EF16F72D5ABEE776E /* Palette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 609E255EE4FCD1D49E9C350A /* Palette.swift */; };
 		C237EFDD0377BBFE5C12DB47 /* BandBatteryCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EC055C8D8B21846AEB87BB9 /* BandBatteryCheck.swift */; };
 		CB700FE82DCB7CB4F1EF094D /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B41BB7C73FE70933CF08C1D3 /* HealthKitService.swift */; };
+		D07D638031C467AFA2E4541C /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02CF1AA31D3D3FE3F6C940C /* Haptics.swift */; };
 		D423EE78B19A097F4E9AEEA2 /* MorningStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6F91E579996375041BE3E7 /* MorningStore.swift */; };
 		D64F18F7800331E02756FF7C /* ReadinessStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C643D73D803572B8788B1AF /* ReadinessStyle.swift */; };
 		DD15955C2152A88F4597C4D1 /* HRVCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5A82337CA5B49F670CF4FD95 /* HRVCore */; };
@@ -80,6 +81,7 @@
 		B03416E33487D99CF1403F1D /* MethodView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MethodView.swift; sourceTree = "<group>"; };
 		B41BB7C73FE70933CF08C1D3 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
 		CC5E656D7580CD3730E86DC3 /* Morning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Morning.swift; sourceTree = "<group>"; };
+		D02CF1AA31D3D3FE3F6C940C /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		D07DFB6B16584D8EEE1DD01F /* MorningDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningDetailView.swift; sourceTree = "<group>"; };
 		DDFE939BCF490825DF7AB960 /* HeartRateSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateSource.swift; sourceTree = "<group>"; };
 		E10F2310301F97207239818F /* BLEHeartRateSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEHeartRateSource.swift; sourceTree = "<group>"; };
@@ -115,6 +117,7 @@
 			children = (
 				4A6DCA827DD088985C178D16 /* AppDelegate.swift */,
 				ECF98E4C6046F5A731DBE09A /* AppSettings.swift */,
+				D02CF1AA31D3D3FE3F6C940C /* Haptics.swift */,
 				609E255EE4FCD1D49E9C350A /* Palette.swift */,
 				9DBFF33B80A103B719878027 /* ReadinessApp.swift */,
 				FAB49609F3A58B3A215ADDC3 /* RootView.swift */,
@@ -387,6 +390,7 @@
 				59753C0BE03048DB6550F7FC /* BatteryLabel.swift in Sources */,
 				570D7E0230A195A08C4B4B5C /* CheckInCard.swift in Sources */,
 				05E14B4E505407A465CD88D7 /* Glossary.swift in Sources */,
+				D07D638031C467AFA2E4541C /* Haptics.swift in Sources */,
 				CB700FE82DCB7CB4F1EF094D /* HealthKitService.swift in Sources */,
 				09DF8A9FF7C0AE6C176B855E /* HeartRateSource.swift in Sources */,
 				8C224885FFCB597D7BF6A480 /* HistoryView.swift in Sources */,

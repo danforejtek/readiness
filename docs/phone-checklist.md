@@ -51,6 +51,8 @@ or ask Claude to build and install). Tick items off as you go and note anything 
       When the 2:00 are up with fewer than 80 clean beats, the ring turns amber and shows
       "extending · N more clean beats"; it finishes as soon as 80 clean beats are in, or after at most 60 s more.
 - [ ] A normal, still measurement finishes at 2:00 as before, with no extension.
+- [ ] With eyes closed you feel the end: a success tap when the result appears, an error buzz if it fails, and one
+      warning pulse when the extension starts.
 
 ## Rejected beats and older mornings
 

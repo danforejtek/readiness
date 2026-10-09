@@ -130,6 +130,7 @@ final class MeasurementSession {
         case .failed(let message):
             stopStreams()
             phase = .failed(message)
+            if t0 != nil { Haptics.notify(.error) }
         }
     }
 
@@ -174,7 +175,10 @@ final class MeasurementSession {
         if cleanBeats >= AppSettings.minCleanBeats || measured >= durationS + AppSettings.maxExtensionS {
             finish()
         } else {
-            if !extending { statusText = "Too many rejected beats, measuring a little longer… keep still" }
+            if !extending {
+                statusText = "Too many rejected beats, measuring a little longer… keep still"
+                Haptics.notify(.warning)
+            }
             extending = true
             extensionRemaining = max(0, durationS + AppSettings.maxExtensionS - measured)
         }
@@ -184,6 +188,7 @@ final class MeasurementSession {
         stopStreams()
         guard let m = buffer.metrics(), m.n >= 30 else {
             phase = .failed("Not enough clean heartbeats (\(cleanBeats)). Check that the sensor sits snugly with good skin contact, keep still, and try again.")
+            Haptics.notify(.error)
             return
         }
         let morning = Morning(date: Date(), metrics: m, spectral: buffer.spectral(), settleS: settleS, rrMs: buffer.values,
@@ -200,6 +205,7 @@ final class MeasurementSession {
         result = morning
         phase = .result
         statusText = "Done"
+        Haptics.notify(.success)
     }
 }
 

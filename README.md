@@ -30,7 +30,7 @@ Screens:
 | Screen | Content |
 |---|---|
 | Today | Week strip (Mon–Sun, measured mornings marked), three rings (Regeneration, Readiness, Stress) with "% vs average" and "% since last" chips, the verdict card (with a *Provisional* badge while the baseline is young), why-rows for HRV and resting HR against your normal range, a *Live heart rate* button. |
-| Measure | 60 s settle and 120 s measurement ring, live HR and RR tachogram with rejected beats in amber, automatic extension when too many beats are rejected, then the result and the *How do you feel?* check-in. |
+| Measure | 60 s settle and 120 s measurement ring, live HR and RR tachogram with rejected beats in amber, automatic extension when too many beats are rejected, a haptic pulse at the extension and at the end, then the result and the *How do you feel?* check-in. |
 | Trends | 2 weeks, 1, 3 or 6 months, 1 year: lnRMSSD with the normal band and the 7-day average (hollow points = provisional verdicts), resting HR, Regeneration, Stress, score, breathing rate. |
 | Insights | Cards that compare your mornings with each other and with your check-ins (see [Insights](#insights)). |
 | History | Every morning; the detail view has the tachogram, Poincaré plot, spectrum, all numbers with explanations, and the check-in. Swipe left to delete. |
