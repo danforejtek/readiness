@@ -49,7 +49,7 @@ enum ReminderService {
                   fire > now, !(offset == 0 && measuredToday) else { continue }
             let content = UNMutableNotificationContent()
             content.title = "Morning HRV"
-            content.body = "Before you get up: put the band on, lie still and measure for two minutes."
+            content.body = "Before you get up: put your heart-rate sensor on, lie still and measure for two minutes."
             content.sound = .default
             content.userInfo = ["action": "measure"]
             let trigger = UNCalendarNotificationTrigger(

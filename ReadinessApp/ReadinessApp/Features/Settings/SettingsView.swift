@@ -15,6 +15,12 @@ struct SettingsView: View {
     @AppStorage(AppSettings.healthEnabledKey) private var healthEnabled = false
     @AppStorage(AppSettings.reminderEnabledKey) private var reminderEnabled = false
     @AppStorage(AppSettings.reminderMinutesKey) private var reminderMinutes = 390
+    @AppStorage(AppSettings.appearanceKey) private var appearance = Appearance.dark
+    @AppStorage(AppSettings.bandBatteryKey) private var bandBattery: Int?
+    @AppStorage(AppSettings.bandBatteryDateKey) private var bandBatteryDate: Double?
+    @State private var batteryCheck = BandBatteryCheck()
+    @AppStorage(AppSettings.baselineResetsKey) private var baselineResets = ""
+    @State private var confirmBaselineReset = false
     @State private var healthMessage: String?
     @State private var reminderMessage: String?
     @State private var healthBusy = false
@@ -27,24 +33,57 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    Picker("Appearance", selection: $appearance) {
+                        ForEach(Appearance.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Text("Appearance")
+                } footer: {
+                    Text("Dark keeps the screen gentle in a dim bedroom. System follows the phone's light/dark schedule.")
+                }
                 Section("Morning protocol") {
                     Stepper("Settle: \(Int(settleSeconds)) s", value: $settleSeconds, in: 0...60, step: 5)
                     Stepper("Measure: \(Int(measureSeconds)) s", value: $measureSeconds, in: 60...300, step: 30)
-                    Text("Elonga uses 120 s. Keep the same protocol every day so values stay comparable.")
+                    Text("120 s is the usual length for a morning HRV reading. Keep the same protocol every day so values stay comparable.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Heart-rate source") {
-                    Toggle("Use the Bluetooth band", isOn: $useBand)
+                    Toggle("Use a Bluetooth sensor", isOn: $useBand)
                         .disabled(AppSettings.isSimulator || BLESourceRegistry.make == nil)
                     if AppSettings.isSimulator {
                         Text("The Simulator has no Bluetooth; recordings are replayed instead.").font(.footnote).foregroundStyle(.secondary)
                     } else if let bandName {
-                        LabeledContent("Remembered band", value: bandName)
-                        Button("Forget band") { AppSettings.forgetBand() }
-                        Text("The next measurement connects to this band first. Forget it to pick up a different sensor.")
+                        LabeledContent("Remembered sensor", value: bandName)
+                        LabeledContent("Battery") {
+                            if let bandBattery {
+                                BatteryLabel(percent: bandBattery, date: bandBatteryDate.map(Date.init(timeIntervalSince1970:)))
+                            } else {
+                                Text("not read yet").foregroundStyle(.secondary)
+                            }
+                        }
+                        Button {
+                            batteryCheck.start()
+                        } label: {
+                            HStack {
+                                Label("Check battery now", systemImage: "battery.100percent.bolt")
+                                if batteryCheck.running { Spacer(); ProgressView() }
+                            }
+                        }
+                        .disabled(batteryCheck.running || !useBand)
+                        if let status = batteryCheck.status {
+                            Text(status).font(.footnote).foregroundStyle(.secondary)
+                        }
+                        if let bandBattery, bandBattery < AppSettings.lowBatteryPercent {
+                            Text("Charge the sensor before the next measurement: on a low battery it may drop the connection.")
+                                .font(.footnote).foregroundStyle(Palette.alert)
+                        }
+                        Button("Forget sensor") { AppSettings.forgetBand() }
+                        Text("The next measurement connects to this sensor first. Forget it to switch to a different one, such as a chest strap instead of an armband.")
                             .font(.footnote).foregroundStyle(.secondary)
                     } else {
-                        Text("No band remembered yet. The first measurement connects to the first heart-rate sensor it finds (press the band's button so it blinks blue) and remembers it.")
+                        Text("No sensor remembered yet. The first measurement connects to the first Bluetooth heart-rate sensor it finds and remembers it. Wake the sensor first: put it on (chest straps wake on skin contact) or press its button if it has one.")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                     Picker("Recording to replay", selection: $replayFixture) {
@@ -57,6 +96,29 @@ struct SettingsView: View {
                     }
                 }
                 Section {
+                    let resets = AppSettings.parseResets(baselineResets)
+                    LabeledContent("Current baseline", value: resets.last.map { "since \(Fmt.day.string(from: $0))" } ?? "all mornings")
+                    Button { confirmBaselineReset = true } label: {
+                        Label("Start a new baseline", systemImage: "arrow.counterclockwise")
+                    }
+                    .disabled(mornings.isEmpty)
+                    if let last = resets.last {
+                        Button { AppSettings.undoLastBaselineReset() } label: {
+                            Label("Undo reset of \(Fmt.day.string(from: last))", systemImage: "arrow.uturn.backward")
+                        }
+                    }
+                } header: {
+                    Text("Baseline")
+                } footer: {
+                    Text("Start a new baseline after switching sensors (say, from an armband to a chest strap) or a big change in routine: values from different sensors are not directly comparable. The next \(Readiness.minBaselineDays) mornings, starting with today's, build a fresh normal range. Earlier mornings keep their verdicts.")
+                }
+                .confirmationDialog("Start a new baseline?", isPresented: $confirmBaselineReset, titleVisibility: .visible) {
+                    Button("Start from today") { AppSettings.startNewBaseline() }
+                } message: {
+                    Text("Today's morning becomes the first of \(Readiness.minBaselineDays) new baseline mornings, and scores pause until then. Nothing is deleted, and you can undo it here.")
+                }
+
+                Section {
                     Toggle("Morning reminder", isOn: $reminderEnabled)
                     if reminderEnabled {
                         DatePicker("Time", selection: reminderTime, displayedComponents: .hourAndMinute)
@@ -65,7 +127,7 @@ struct SettingsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    if let reminderMessage { Text(reminderMessage).font(.footnote).foregroundStyle(.orange) }
+                    if let reminderMessage { Text(reminderMessage).font(.footnote).foregroundStyle(Palette.caution) }
                 } header: {
                     Text("Reminder")
                 } footer: {
@@ -90,7 +152,7 @@ struct SettingsView: View {
                     } header: {
                         Text("Apple Health")
                     } footer: {
-                        Text("Writes heart rate variability (as SDNN, the measure Apple Health uses) and resting heart rate after each measurement with the band. RMSSD, the score and the verdict stay in this app. Deleting a measurement here also removes its Health entries.")
+                        Text("Writes heart rate variability (as SDNN, the measure Apple Health uses) and resting heart rate after each measurement with a sensor. RMSSD, the score and the verdict stay in this app. Deleting a measurement here also removes its Health entries.")
                     }
                     .onChange(of: healthEnabled) { _, on in if on { Task { await enableHealth() } } }
                 }
@@ -137,6 +199,7 @@ struct SettingsView: View {
                 Text("Entries this app wrote to Apple Health are removed too.")
             }
             .onChange(of: mornings.count) { _, _ in exportURLs = nil }
+            .onDisappear { batteryCheck.cancel() }
             .task { router.nextReminder = await ReminderService.nextFireDate() }
         }
     }

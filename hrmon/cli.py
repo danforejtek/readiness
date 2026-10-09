@@ -241,7 +241,7 @@ def _finish_measure(sess: Session) -> None:
     console.print(f"Raw beats saved to [bold]{sess.logger.path}[/]")
     if m is None or m.n < 30:
         console.print("[red]Not enough clean RR intervals for a reliable result. "
-                      "Check the band is snug on the inner forearm and try again.[/]")
+                      "Check that the sensor sits snugly with good skin contact and try again.[/]")
         return
     sp = sess.buffer.spectral()
     pc = poincare(sess.buffer.values)
@@ -426,7 +426,7 @@ async def cmd_measure(args) -> int:
     _parse_tags(args.tags)   # fail before connecting, not after two minutes
     console.print(Panel(
         "Do this right after waking, before coffee, phone or getting up.\n"
-        "Lie still on your back, breathe normally, band snug on the inner forearm.\n"
+        "Lie still on your back, breathe normally, heart-rate sensor on with good skin contact.\n"
         f"{_mmss(args.settle)} to settle, then {_mmss(args.duration)} of measurement; "
         "the clock starts with the first heartbeat received.",
         title="Morning readiness measurement", border_style="cyan"))

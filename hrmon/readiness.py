@@ -260,12 +260,18 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
     a.hr_change = Comparison(None, pct_change(today.mean_hr, prev.mean_hr if prev else None))
 
     if len(history) < p.min_baseline_days:
-        a.notes.append(f"Building your baseline: {len(history)} of {p.min_baseline_days} mornings recorded. "
-                       "Verdicts start after a week of mornings measured the same way.")
+        # Today's morning counts: it joins the baseline of the next one.
+        recorded = len(history) + 1
+        if recorded >= p.min_baseline_days:
+            a.notes.append(f"Baseline complete: {recorded} mornings recorded. "
+                           "Your first verdict comes with the next morning.")
+        else:
+            a.notes.append(f"Building your baseline: {recorded} of {p.min_baseline_days} mornings recorded. "
+                           "Verdicts start after a week of mornings measured the same way.")
         if a.low_confidence:
             a.notes.append(f"Noisy reading ({today.artefact_pct:.0f} % of beats rejected, {today.beats} clean beats). "
-                           "Tighten the band on the inner forearm and keep still, so your baseline starts "
-                           "from clean mornings.")
+                           "Check that the sensor sits snugly with good skin contact and keep still, so your "
+                           "baseline starts from clean mornings.")
         return a
 
     ln_vals = [r.ln_rmssd for r in history]
@@ -324,8 +330,8 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
                        "training block.")
     if a.low_confidence:
         a.notes.append(f"Noisy reading ({today.artefact_pct:.0f} % of beats rejected, {today.beats} clean beats). "
-                       "Treat today's verdict with caution. Next time tighten the band on the inner forearm "
-                       "and keep still.")
+                       "Treat today's verdict with caution. Next time check that the sensor sits snugly with "
+                       "good skin contact and keep still.")
     if a.status == READY and not a.notes:
         a.notes.append("HRV and resting HR are within your normal range. A good day for a hard session.")
     elif a.status == MODERATE and not a.illness:

@@ -37,7 +37,7 @@ final class ReplayHeartRateSource: HeartRateSource {
                     try await Task.sleep(nanoseconds: UInt64(max(0, seconds) / speed * 1_000_000_000))
                 }
                 do {
-                    continuation.yield(.status("Searching for the band…"))
+                    continuation.yield(.status("Searching for the sensor…"))
                     try await pause(0.8)
                     guard !packets.isEmpty else {
                         continuation.yield(.failed("No recorded session available to replay."))

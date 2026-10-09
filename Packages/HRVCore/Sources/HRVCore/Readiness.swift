@@ -55,6 +55,7 @@ public struct Assessment: Equatable, Sendable {
     public var status: ReadinessStatus
     /// 0–100, 75 = your normal day; nil while building the baseline.
     public var score: Int?
+    /// Earlier mornings in the baseline window (today excluded); a verdict needs `Readiness.minBaselineDays`.
     public var baselineN: Int
     public var lnMean: Double?
     public var lnSD: Double?
@@ -78,6 +79,10 @@ public struct Assessment: Equatable, Sendable {
     /// "vs average" is against 5, the baseline by definition.
     public var regenerationChange = Comparison()
     public var stressChange = Comparison()
+
+    /// Mornings recorded towards the baseline, today included, capped at `Readiness.minBaselineDays`.
+    /// Shown to the user; `baselineN` alone is one short because it leaves out the morning just measured.
+    public var baselineRecorded: Int { min(baselineN + 1, Readiness.minBaselineDays) }
 
     public var lnRange: ClosedRange<Double>? {
         guard let m = lnMean, let sd = lnSD else { return nil }
@@ -180,9 +185,15 @@ public enum Readiness {
         a.hrChange = Comparison(vsLastPct: pctChange(today.meanHR, prev?.meanHR))
 
         if history.count < minBaselineDays {
-            a.notes.append("Building your baseline: \(history.count) of \(minBaselineDays) mornings recorded. Verdicts start after a week of mornings measured the same way.")
+            // Today's morning counts: it joins the baseline of the next one.
+            let recorded = history.count + 1
+            if recorded >= minBaselineDays {
+                a.notes.append("Baseline complete: \(recorded) mornings recorded. Your first verdict comes with the next morning.")
+            } else {
+                a.notes.append("Building your baseline: \(recorded) of \(minBaselineDays) mornings recorded. Verdicts start after a week of mornings measured the same way.")
+            }
             if a.lowConfidence {
-                a.notes.append("Noisy reading (\(f0(today.artefactPct)) % of beats rejected, \(today.beats) clean beats). Tighten the band on the inner forearm and keep still, so your baseline starts from clean mornings.")
+                a.notes.append("Noisy reading (\(f0(today.artefactPct)) % of beats rejected, \(today.beats) clean beats). Check that the sensor sits snugly with good skin contact and keep still, so your baseline starts from clean mornings.")
             }
             return a
         }
@@ -240,7 +251,7 @@ public enum Readiness {
             a.notes.append("HRV is unusually high and resting HR unusually low. Usually that means good recovery. If you still feel flat or heavy-legged, it can be a sign of overreaching after a hard training block.")
         }
         if a.lowConfidence {
-            a.notes.append("Noisy reading (\(f0(today.artefactPct)) % of beats rejected, \(today.beats) clean beats). Treat today's verdict with caution. Next time tighten the band on the inner forearm and keep still.")
+            a.notes.append("Noisy reading (\(f0(today.artefactPct)) % of beats rejected, \(today.beats) clean beats). Treat today's verdict with caution. Next time check that the sensor sits snugly with good skin contact and keep still.")
         }
         if a.status == .ready && a.notes.isEmpty {
             a.notes.append("HRV and resting HR are within your normal range. A good day for a hard session.")

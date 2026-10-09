@@ -22,16 +22,31 @@ enum MorningStore {
         return perDay.keys.sorted().map { perDay[$0]! }
     }
 
-    static func dayAssessments(_ mornings: [Morning]) -> [DayAssessment] {
-        let daily = dailyMornings(mornings)
-        let assessments = Readiness.assessAll(daily.map(\.dayRecord))
-        return zip(daily, assessments).map { DayAssessment(morning: $0, assessment: $1) }
+    /// Index of the baseline period a day belongs to: 0 before the first reset, 1 after it, …
+    static func period(of date: Date, resets: [Date]) -> Int {
+        let day = Readiness.calendar.startOfDay(for: date)
+        return resets.filter { $0 <= day }.count
     }
 
-    /// Assessment of a specific morning: it stands in for its calendar day, the other days come from the history.
-    static func assessment(for morning: Morning, in mornings: [Morning]) -> Assessment {
+    /// Every morning assessed against the history of its own baseline period (`AppSettings.baselineResets`),
+    /// so a reset starts a fresh baseline while earlier mornings keep the verdicts they had.
+    static func dayAssessments(_ mornings: [Morning], resets: [Date]) -> [DayAssessment] {
+        let daily = dailyMornings(mornings)
+        let periods = Dictionary(grouping: daily) { period(of: $0.date, resets: resets) }
+        return periods.keys.sorted().flatMap { key -> [DayAssessment] in
+            let ms = periods[key]!
+            return zip(ms, Readiness.assessAll(ms.map(\.dayRecord))).map { DayAssessment(morning: $0, assessment: $1) }
+        }
+    }
+
+    /// Assessment of a specific morning: it stands in for its calendar day, the other days come from the history
+    /// of the same baseline period.
+    static func assessment(for morning: Morning, in mornings: [Morning], resets: [Date]) -> Assessment {
         let day = Readiness.calendar.startOfDay(for: morning.date)
-        var daily = dailyMornings(mornings.filter { Readiness.calendar.startOfDay(for: $0.date) != day })
+        let p = period(of: morning.date, resets: resets)
+        var daily = dailyMornings(mornings.filter {
+            Readiness.calendar.startOfDay(for: $0.date) != day && period(of: $0.date, resets: resets) == p
+        })
         daily.append(morning)
         daily.sort { $0.date < $1.date }
         let index = daily.firstIndex { $0.id == morning.id } ?? daily.count - 1

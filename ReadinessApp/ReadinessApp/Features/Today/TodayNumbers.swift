@@ -15,10 +15,10 @@ struct TodayNumbersCard: View {
             }
             HStack(alignment: .top, spacing: 8) {
                 IndexColumn(title: "Regeneration", info: .regeneration, value: assessment.regeneration,
-                            direction: .higherIsBetter, change: assessment.regenerationChange)
+                            direction: .higherIsBetter, change: assessment.regenerationChange, tint: Palette.regeneration)
                 ReadinessColumn(assessment: assessment)
                 IndexColumn(title: "Stress", info: .stress, value: assessment.stress,
-                            direction: .lowerIsBetter, change: assessment.stressChange)
+                            direction: .lowerIsBetter, change: assessment.stressChange, tint: Palette.stress)
             }
             if assessment.regeneration != nil || assessment.stress != nil {
                 Text("Regeneration and Stress: 5 is your normal, 4–6 your normal range.")
@@ -35,10 +35,13 @@ private struct ColumnTitle: View {
     let info: Metric
 
     var body: some View {
-        HStack(spacing: 3) {
-            Text(title).font(.caption.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
-            InfoButton(metric: info)
-        }
+        // Only the text is centred over the ring; the ⓘ hangs off its trailing edge.
+        Text(title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+            .overlay(alignment: .trailing) {
+                InfoButton(metric: info)
+                    .fixedSize()
+                    .alignmentGuide(.trailing) { d in d[.leading] - 3 }
+            }
     }
 }
 
@@ -48,21 +51,25 @@ private struct IndexColumn: View {
     let value: Double?
     let direction: MetricDirection
     let change: Comparison
+    /// The ring shows what is measured; the level label below says whether it is good.
+    let tint: Color
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
             ColumnTitle(title: title, info: info)
             if let value {
                 let level = IndexLevel(value: value, direction: direction)
-                RingGauge(fraction: value / 10, color: level.color) {
+                RingGauge(fraction: value / 10, color: tint) {
                     Text(Fmt.n(value, 1)).font(.title2.weight(.bold)).monospacedDigit()
-                    Text("of 10").font(.caption2).foregroundStyle(.secondary)
+                    Text("/ 10").font(.caption2).foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("\(title) \(Fmt.n(value, 1)) of 10, \(level.label(direction))")
-                Text(level.label(direction)).font(.caption.weight(.semibold)).foregroundStyle(level.color)
-                ForEach(ChangeChip.chips(change, direction: direction), id: \.text) { chip in
-                    ChipView(chip: chip, short: true)
+                Text(level.label(direction)).font(.subheadline.weight(.semibold)).foregroundStyle(level.color)
+                VStack(spacing: 6) {
+                    ForEach(ChangeChip.chips(change, direction: direction), id: \.text) { chip in
+                        ChipView(chip: chip, short: true)
+                    }
                 }
             } else {
                 RingGauge(fraction: 0, color: .secondary) {
@@ -81,26 +88,26 @@ private struct ReadinessColumn: View {
 
     var body: some View {
         let status = assessment.status
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
             ColumnTitle(title: "Readiness", info: .score)
             if let score = assessment.score {
-                RingGauge(fraction: Double(score) / 100, color: status.color) {
+                RingGauge(fraction: Double(score) / 100, color: Palette.readiness) {
                     Text("\(score)").font(.title2.weight(.bold)).monospacedDigit()
-                    Text("of 100").font(.caption2).foregroundStyle(.secondary)
+                    Text("/ 100").font(.caption2).foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Readiness score \(score) of 100, \(status.title)")
             } else {
                 let total = Readiness.minBaselineDays
-                RingGauge(fraction: Double(min(assessment.baselineN, total)) / Double(total), color: status.color) {
-                    Text("\(assessment.baselineN)/\(total)").font(.title3.weight(.bold)).monospacedDigit()
+                RingGauge(fraction: Double(assessment.baselineRecorded) / Double(total), color: status.color) {
+                    Text("\(assessment.baselineRecorded)/\(total)").font(.title3.weight(.bold)).monospacedDigit()
                     Text("mornings").font(.caption2).foregroundStyle(.secondary)
                 }
             }
-            Text(status.title).font(.caption.weight(.semibold)).foregroundStyle(status.color)
+            Text(status.title).font(.subheadline.weight(.semibold)).foregroundStyle(status.color)
                 .multilineTextAlignment(.center)
             if assessment.score != nil {
-                Text("75 = normal").font(.caption2).foregroundStyle(.secondary)
+                Text("75 = normal").font(.caption).foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity)
@@ -146,8 +153,8 @@ struct ChipView: View {
 
     private var color: Color {
         switch chip.isGood {
-        case true?: return .green
-        case false?: return .orange
+        case true?: return Palette.good
+        case false?: return Palette.caution
         case nil: return .secondary
         }
     }
@@ -172,9 +179,9 @@ struct ChipRow: View {
 extension IndexLevel {
     var color: Color {
         switch self {
-        case .better, .normal: return .green
-        case .slightlyWorse: return .yellow
-        case .clearlyWorse: return .red
+        case .better, .normal: return Palette.good
+        case .slightlyWorse: return Palette.caution
+        case .clearlyWorse: return Palette.alert
         }
     }
 

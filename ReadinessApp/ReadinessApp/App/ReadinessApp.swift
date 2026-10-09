@@ -4,6 +4,7 @@ import SwiftUI
 @main
 struct ReadinessApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @AppStorage(AppSettings.appearanceKey) private var appearance = Appearance.dark
     let container: ModelContainer = {
         do {
             return try ModelContainer(for: Morning.self)
@@ -20,6 +21,8 @@ struct ReadinessApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .preferredColorScheme(appearance.colorScheme)
+                .tint(Palette.accent)
         }
         .modelContainer(container)
     }

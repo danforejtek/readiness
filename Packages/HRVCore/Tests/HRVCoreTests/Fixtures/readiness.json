@@ -721,7 +721,7 @@
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Building your baseline: 0 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
+    "Building your baseline: 1 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
    "regeneration": null,
    "stress": null,
@@ -759,7 +759,7 @@
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Building your baseline: 1 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
+    "Building your baseline: 2 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
    "regeneration": null,
    "stress": null,
@@ -797,7 +797,7 @@
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Building your baseline: 2 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
+    "Building your baseline: 3 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
    "regeneration": null,
    "stress": null,
@@ -835,7 +835,7 @@
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Building your baseline: 3 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
+    "Building your baseline: 4 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
    "regeneration": null,
    "stress": null,
@@ -873,7 +873,7 @@
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Building your baseline: 4 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
+    "Building your baseline: 5 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
    "regeneration": null,
    "stress": null,
@@ -911,7 +911,7 @@
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Building your baseline: 5 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
+    "Building your baseline: 6 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
    "regeneration": null,
    "stress": null,
@@ -949,7 +949,7 @@
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Building your baseline: 6 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
+    "Baseline complete: 7 mornings recorded. Your first verdict comes with the next morning."
    ],
    "regeneration": null,
    "stress": null,
@@ -2016,7 +2016,7 @@
    "low_confidence": true,
    "notes": [
     "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
-    "Noisy reading (25 % of beats rejected, 40 clean beats). Treat today's verdict with caution. Next time tighten the band on the inner forearm and keep still.",
+    "Noisy reading (25 % of beats rejected, 40 clean beats). Treat today's verdict with caution. Next time check that the sensor sits snugly with good skin contact and keep still.",
     "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
    ],
    "regeneration": 5.3,
@@ -2359,7 +2359,7 @@
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Building your baseline: 0 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
+    "Building your baseline: 1 of 7 mornings recorded. Verdicts start after a week of mornings measured the same way."
    ],
    "regeneration": null,
    "stress": null,

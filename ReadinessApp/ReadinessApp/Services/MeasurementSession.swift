@@ -115,6 +115,8 @@ final class MeasurementSession {
             if pauseStarted != nil { pausedTotal += Date().timeIntervalSince(pauseStarted!); pauseStarted = nil }
         case .sample(let s):
             onSample(s)
+        case .battery(let b):
+            battery = b
         case .disconnected:
             statusText = "Connection lost, reconnecting…"
             if t0 != nil, pauseStarted == nil { pauseStarted = Date(); interrupted = true }
@@ -164,7 +166,7 @@ final class MeasurementSession {
     private func finish() {
         stopStreams()
         guard let m = buffer.metrics(), m.n >= 30 else {
-            phase = .failed("Not enough clean heartbeats (\(cleanBeats)). Tighten the band on the inner forearm, keep the arm still, and try again.")
+            phase = .failed("Not enough clean heartbeats (\(cleanBeats)). Check that the sensor sits snugly with good skin contact, keep still, and try again.")
             return
         }
         let morning = Morning(date: Date(), metrics: m, spectral: buffer.spectral(), settleS: settleS, rrMs: buffer.values,

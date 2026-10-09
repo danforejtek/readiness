@@ -45,7 +45,16 @@ class ReadinessTests(unittest.TestCase):
         a = assess(recs)
         self.assertEqual(a.status, BASELINE)
         self.assertIsNone(a.score)
-        self.assertIn("4 of 7", a.notes[0])
+        # Five mornings measured, today included: the note counts what the user sees in the week strip.
+        self.assertIn("5 of 7", a.notes[0])
+
+    def test_baseline_complete_on_seventh_morning(self):
+        a = assess(make_history(7))
+        self.assertEqual(a.status, BASELINE)
+        self.assertEqual(a.baseline_n, 6)
+        self.assertIn("Baseline complete: 7 mornings", a.notes[0])
+        a = assess(make_history(8))
+        self.assertIsNotNone(a.score)
 
     def test_normal_day_is_ready(self):
         recs = add_day(make_history(), ln=4.02, hr=52.5)

@@ -29,7 +29,7 @@ struct WeekStripView: View {
                         }
                     }
                 }
-                RingGauge(fraction: Double(count) / 7, color: .accentColor, size: 44, lineWidth: 5) {
+                RingGauge(fraction: Double(count) / 7, color: Palette.accent, size: 44, lineWidth: 5) {
                     Text("\(count)/7").font(.caption.weight(.bold)).monospacedDigit()
                 }
                 .accessibilityElement(children: .ignore)
@@ -48,15 +48,15 @@ private struct DayCell: View {
         VStack(spacing: 4) {
             Text(Self.weekday.string(from: day.date))
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(day.isToday ? Color.accentColor : .secondary)
+                .foregroundStyle(day.isToday ? Palette.accent : .secondary)
             Text(Self.dayNumber.string(from: day.date))
                 .font(.subheadline.weight(day.isToday ? .bold : .regular))
                 .monospacedDigit()
                 .frame(width: 30, height: 30)
-                .background(day.isToday ? Color.accentColor.opacity(0.18) : .clear, in: Circle())
+                .background(day.isToday ? Palette.accent.opacity(0.18) : .clear, in: Circle())
                 .foregroundStyle(day.isFuture ? .tertiary : .primary)
             Circle()
-                .fill(day.measured ? Color.accentColor : Color.secondary.opacity(day.isFuture ? 0 : 0.25))
+                .fill(day.measured ? Palette.accent : Color.secondary.opacity(day.isFuture ? 0 : 0.25))
                 .frame(width: 6, height: 6)
         }
         .frame(maxWidth: .infinity)

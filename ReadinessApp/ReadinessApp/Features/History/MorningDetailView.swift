@@ -6,6 +6,7 @@ import SwiftUI
 struct MorningDetailView: View {
     let morning: Morning
     @Query(sort: \Morning.date) private var mornings: [Morning]
+    @AppStorage(AppSettings.baselineResetsKey) private var baselineResets = ""
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
@@ -20,7 +21,7 @@ struct MorningDetailView: View {
     }
 
     private var content: some View {
-        let assessment = MorningStore.assessment(for: morning, in: mornings)
+        let assessment = MorningStore.assessment(for: morning, in: mornings, resets: AppSettings.parseResets(baselineResets))
         let analysis = MorningAnalysis(morning)
         return ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -127,14 +128,14 @@ private struct TachogramCard: View {
 
     var body: some View {
         let rejectedText = analysis.rejected == 0 ? "no beats rejected"
-            : analysis.rejected == 1 ? "1 rejected beat in orange" : "\(analysis.rejected) rejected beats in orange"
+            : analysis.rejected == 1 ? "1 rejected beat in amber" : "\(analysis.rejected) rejected beats in amber"
         Card(title: "Beat-to-beat intervals", info: .quality,
              subtitle: "Time between heartbeats over the measurement, \(rejectedText). The line rises when you breathe out and falls when you breathe in; bigger waves mean more variability.") {
             Chart(analysis.beats) { b in
                 LineMark(x: .value("Seconds", b.t), y: .value("RR", b.rr))
-                    .foregroundStyle(.red.opacity(0.8)).interpolationMethod(.monotone)
+                    .foregroundStyle(Palette.measure.opacity(0.9)).interpolationMethod(.monotone)
                 if !b.accepted {
-                    PointMark(x: .value("Seconds", b.t), y: .value("RR", b.rr)).foregroundStyle(.orange)
+                    PointMark(x: .value("Seconds", b.t), y: .value("RR", b.rr)).foregroundStyle(Palette.caution)
                 }
             }
             .chartYScale(domain: .automatic(includesZero: false))
@@ -165,12 +166,12 @@ private struct PoincareCard: View {
                     .foregroundStyle(.secondary.opacity(0.5)).lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 ForEach(pts) { p in
                     PointMark(x: .value("RRₙ", p.x), y: .value("RRₙ₊₁", p.y))
-                        .foregroundStyle(.red.opacity(0.55)).symbolSize(18)
+                        .foregroundStyle(Palette.measure.opacity(0.55)).symbolSize(18)
                 }
                 if let pc {
                     ForEach(Self.ellipse(center: analysis.meanRR, sd1: pc.sd1, sd2: pc.sd2)) { e in
                         LineMark(x: .value("RRₙ", e.x), y: .value("RRₙ₊₁", e.y), series: .value("s", "ellipse"))
-                            .foregroundStyle(.blue).lineStyle(StrokeStyle(lineWidth: 2))
+                            .foregroundStyle(Palette.calm).lineStyle(StrokeStyle(lineWidth: 2))
                     }
                 }
             }
@@ -200,17 +201,17 @@ private struct SpectrumCard: View {
     var body: some View {
         let peak = morning.breathingBpm.map { $0 / 60 }
         Card(title: "Spectrum", info: .hf,
-             subtitle: "How the variability splits by speed. Green is breathing speed (HF \(Fmt.n(morning.hfMs2)) ms²), blue is slower regulation (LF \(Fmt.n(morning.lfMs2)) ms²). The dashed line marks your breathing rate.") {
+             subtitle: "How the variability splits by speed. Green is breathing speed (HF \(Fmt.n(morning.hfMs2)) ms²), violet is slower regulation (LF \(Fmt.n(morning.lfMs2)) ms²). The dashed line marks your breathing rate.") {
             Chart {
-                RectangleMark(xStart: .value("f", 0.04), xEnd: .value("f", 0.15)).foregroundStyle(.blue.opacity(0.10))
-                RectangleMark(xStart: .value("f", 0.15), xEnd: .value("f", 0.40)).foregroundStyle(.green.opacity(0.10))
+                RectangleMark(xStart: .value("f", 0.04), xEnd: .value("f", 0.15)).foregroundStyle(Palette.calm.opacity(0.12))
+                RectangleMark(xStart: .value("f", 0.15), xEnd: .value("f", 0.40)).foregroundStyle(Palette.good.opacity(0.12))
                 ForEach(analysis.spectrum) { s in
-                    AreaMark(x: .value("Hz", s.f), y: .value("PSD", s.p)).foregroundStyle(.red.opacity(0.30))
-                    LineMark(x: .value("Hz", s.f), y: .value("PSD", s.p)).foregroundStyle(.red)
+                    AreaMark(x: .value("Hz", s.f), y: .value("PSD", s.p)).foregroundStyle(Palette.accent.opacity(0.30))
+                    LineMark(x: .value("Hz", s.f), y: .value("PSD", s.p)).foregroundStyle(Palette.accent)
                 }
                 if let peak, peak > 0 {
                     RuleMark(x: .value("Hz", peak))
-                        .foregroundStyle(.green).lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                        .foregroundStyle(Palette.good).lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
                         .annotation(position: .top, alignment: .leading) {
                             Text("\(Fmt.n(morning.breathingBpm)) breaths/min").font(.caption2).foregroundStyle(.secondary)
                         }

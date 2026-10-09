@@ -7,8 +7,8 @@ struct MethodView: View {
         List {
             Section("The measurement") {
                 Para("Measure right after waking, before you get up, coffee or phone. Lie on your back in the same position every day.")
-                Para("Wear the band on the inner forearm, snug but comfortable. The first 15 seconds let your heart settle and are not used. The next 120 seconds are measured.")
-                Para("Breathe normally. Moving, talking or a loose band produce rejected beats and a less reliable result.")
+                Para("Put on your heart-rate sensor so it sits snugly with good skin contact: a chest strap with moistened electrodes, or an armband on the forearm. The first 15 seconds let your heart settle and are not used. The next 120 seconds are measured.")
+                Para("Breathe normally. Moving, talking or a loose sensor produce rejected beats and a less reliable result.")
             }
             Section("Your normal") {
                 Para("Each morning gives two numbers: lnRMSSD, your heart rate variability, and resting heart rate.")
@@ -36,7 +36,7 @@ struct MethodView: View {
             }
             Section("Limits") {
                 Para("Alcohol, a late meal, poor sleep, caffeine, a full bladder or a stressful dream all move the numbers. One odd morning means little; a pattern over several mornings is what counts.")
-                Para("An optical band on the forearm is noisier than a chest strap, so check the signal quality line.")
+                Para("Optical sensors (armbands, watches) are noisier than an ECG chest strap, so check the signal quality line. Stick with one sensor: switching changes your values a little, so start a new baseline in Settings when you do.")
                 Para("Readiness is a training aid, not a medical device. See a doctor about symptoms, not about a score.")
             }
             Section("What the numbers mean") {

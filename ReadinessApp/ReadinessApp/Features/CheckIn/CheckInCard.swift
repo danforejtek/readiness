@@ -45,9 +45,9 @@ struct CheckInCard: View {
                             Text(f.title).font(.caption2)
                         }
                         .frame(maxWidth: .infinity, minHeight: 52)
-                        .background(selected ? Color.accentColor.opacity(0.2) : Color(.tertiarySystemFill),
+                        .background(selected ? Palette.accent.opacity(0.2) : Color(.tertiarySystemFill),
                                     in: RoundedRectangle(cornerRadius: 10))
-                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(selected ? Color.accentColor : .clear))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(selected ? Palette.accent : .clear))
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(selected ? .isSelected : [])
@@ -66,8 +66,8 @@ struct CheckInCard: View {
                             .minimumScaleFactor(0.8)
                             .padding(.horizontal, 10).padding(.vertical, 7)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(on ? Color.accentColor.opacity(0.2) : Color(.tertiarySystemFill), in: Capsule())
-                            .overlay(Capsule().strokeBorder(on ? Color.accentColor : .clear))
+                            .background(on ? Palette.accent.opacity(0.2) : Color(.tertiarySystemFill), in: Capsule())
+                            .overlay(Capsule().strokeBorder(on ? Palette.accent : .clear))
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(on ? .isSelected : [])

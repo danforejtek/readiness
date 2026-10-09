@@ -5,6 +5,8 @@ enum HeartRateEvent {
     case status(String)
     case connected(device: String, battery: Int?)
     case sample(HeartRateSample)
+    /// Battery level (%) read or notified after connecting.
+    case battery(Int)
     case disconnected
     case failed(String)
 }

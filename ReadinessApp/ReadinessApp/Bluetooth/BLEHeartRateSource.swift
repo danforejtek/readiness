@@ -82,7 +82,7 @@ final class BLEHeartRateSource: NSObject, HeartRateSource, @unchecked Sendable {
             central.connect(known)
         }
         scanStarted = Date()
-        yield(.status(savedName.map { "Searching for \($0)…" } ?? "Searching for a heart-rate band…"))
+        yield(.status(savedName.map { "Searching for \($0)…" } ?? "Searching for a heart-rate sensor…"))
         central.scanForPeripherals(withServices: [Self.heartRateService],
                                    options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
         let timer = DispatchWorkItem { [weak self] in self?.scanTimedOut() }
@@ -93,10 +93,10 @@ final class BLEHeartRateSource: NSObject, HeartRateSource, @unchecked Sendable {
     private func scanTimedOut() {
         guard !stopped, !connectedOnce else { return }
         fail("""
-        No heart-rate band found in \(Int(scanTimeout)) seconds.
-        Press the band's button once: it blinks blue while waiting for a connection. \
-        Red blinking means the battery is low. If the blue light is steady or not blinking, another app \
-        or a watch is already connected to it; disconnect there first (the band takes one connection at a time).
+        No heart-rate sensor found in \(Int(scanTimeout)) seconds.
+        Make sure it is awake: chest straps wake when worn with moistened electrodes, armbands usually with a \
+        button press. A flat battery also stops it from advertising. If another app or a watch is connected \
+        to it, disconnect there first: many sensors accept only one connection at a time.
         """)
     }
 
@@ -107,7 +107,7 @@ final class BLEHeartRateSource: NSObject, HeartRateSource, @unchecked Sendable {
         if let old = peripheral, old.identifier != p.identifier { central.cancelPeripheralConnection(old) }
         peripheral = p
         p.delegate = self
-        yield(.status("Found \(p.name ?? "band"), connecting…"))
+        yield(.status("Found \(p.name ?? "sensor"), connecting…"))
         central.connect(p)
     }
 
@@ -129,7 +129,7 @@ final class BLEHeartRateSource: NSObject, HeartRateSource, @unchecked Sendable {
         reconnectTimer?.cancel()
         let timer = DispatchWorkItem { [weak self] in
             guard let self, !self.stopped else { return }
-            self.fail("Lost the band for more than \(Int(self.reconnectTimeout)) seconds. Keep the phone within a metre of the band and start again.")
+            self.fail("Lost the sensor for more than \(Int(self.reconnectTimeout)) seconds. Keep the phone within a metre of it and start again.")
         }
         reconnectTimer = timer
         DispatchQueue.main.asyncAfter(deadline: .now() + reconnectTimeout, execute: timer)
@@ -170,7 +170,7 @@ extension BLEHeartRateSource: CBCentralManagerDelegate {
         if let started = scanStarted, Date().timeIntervalSince(started) >= preferSavedFor {
             connect(to: p)
         } else {
-            yield(.status("Found \(p.name ?? "another sensor"), waiting for \(AppSettings.bandName ?? "your band")…"))
+            yield(.status("Found \(p.name ?? "another sensor"), waiting for \(AppSettings.bandName ?? "your sensor")…"))
             DispatchQueue.main.asyncAfter(deadline: .now() + preferSavedFor) { [weak self] in
                 guard let self, !self.stopped, self.peripheral?.state != .connected, self.peripheral?.state != .connecting,
                       let c = self.candidate else { return }
@@ -210,9 +210,9 @@ extension BLEHeartRateSource: CBCentralManagerDelegate {
 extension BLEHeartRateSource: CBPeripheralDelegate {
     func peripheral(_ p: CBPeripheral, didDiscoverServices error: Error?) {
         guard !stopped else { return }
-        if let error { fail("Could not read the band's services: \(error.localizedDescription)"); return }
+        if let error { fail("Could not read the sensor's services: \(error.localizedDescription)"); return }
         guard let services = p.services, !services.isEmpty else {
-            fail("The band offers no Heart Rate Service. Is this the right sensor?")
+            fail("This device offers no Heart Rate Service. Is it the right sensor?")
             return
         }
         for s in services {
@@ -230,6 +230,7 @@ extension BLEHeartRateSource: CBPeripheralDelegate {
             switch c.uuid {
             case Self.batteryLevel:
                 p.readValue(for: c)       // queued before the notify-enable, so the battery is known when we report "connected"
+                if c.properties.contains(.notify) { p.setNotifyValue(true, for: c) }
             case Self.heartRateMeasurement:
                 p.setNotifyValue(true, for: c)
             default: break
@@ -242,7 +243,7 @@ extension BLEHeartRateSource: CBPeripheralDelegate {
         if let error { fail("Could not subscribe to heart-rate data: \(error.localizedDescription)"); return }
         guard c.isNotifying else { return }
         connectedOnce = true
-        yield(.connected(device: p.name ?? "Heart-rate band", battery: battery))
+        yield(.connected(device: p.name ?? "Heart-rate sensor", battery: battery))
     }
 
     func peripheral(_ p: CBPeripheral, didUpdateValueFor c: CBCharacteristic, error: Error?) {
@@ -251,7 +252,11 @@ extension BLEHeartRateSource: CBPeripheralDelegate {
         case Self.heartRateMeasurement:
             if let sample = try? HeartRateSample.parse(data) { yield(.sample(sample)) }
         case Self.batteryLevel:
-            if let b = data.first { battery = Int(b) }
+            if let b = data.first {
+                battery = Int(b)
+                AppSettings.recordBandBattery(Int(b))
+                if connectedOnce { yield(.battery(Int(b))) }
+            }
         default: break
         }
     }

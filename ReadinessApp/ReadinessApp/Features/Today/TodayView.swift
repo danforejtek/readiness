@@ -4,17 +4,27 @@ import SwiftUI
 
 struct TodayView: View {
     @Query(sort: \Morning.date) private var mornings: [Morning]
+    @AppStorage(AppSettings.baselineResetsKey) private var baselineResets = ""
+    @AppStorage(AppSettings.bandBatteryKey) private var bandBattery: Int?
+    @AppStorage(AppSettings.useBandKey) private var useBand = !AppSettings.isSimulator
+    @State private var confirmRemeasure = false
+    @State private var showLive = false
     var onMeasure: () -> Void
 
     var body: some View {
-        let latest = MorningStore.dayAssessments(mornings).last
+        let latest = MorningStore.dayAssessments(mornings, resets: AppSettings.parseResets(baselineResets)).last
+        // Demo rows do not count, same as the reminder (`MorningStore.measuredToday`).
+        let measuredToday = mornings.contains { Calendar.current.isDateInToday($0.date) && $0.source != "demo" }
+        let lowBattery = useBand && (bandBattery ?? 100) < AppSettings.lowBatteryPercent
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     if let latest {
                         WeekStripView(daily: MorningStore.dailyMornings(mornings))
-                        TodayNumbersCard(assessment: latest.assessment,
-                                         isToday: Calendar.current.isDateInToday(latest.morning.date))
+                        if latest.assessment.score != nil {
+                            TodayNumbersCard(assessment: latest.assessment,
+                                             isToday: Calendar.current.isDateInToday(latest.morning.date))
+                        }
                         VerdictCard(assessment: latest.assessment)
                         if !Calendar.current.isDateInToday(latest.morning.date) {
                             Label("Last measurement was \(Fmt.day.string(from: latest.morning.date)). Measure this morning for today's verdict.",
@@ -34,16 +44,49 @@ struct TodayView: View {
                 .padding()
             }
             .navigationTitle("Today")
-            .safeAreaInset(edge: .bottom) {
-                Button(action: onMeasure) {
-                    Label("Measure now", systemImage: "heart.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
+            .toolbar {
+                Menu {
+                    // The escape hatch: once today is measured the big button is gone, but a noisy reading can be redone.
+                    Button {
+                        if measuredToday { confirmRemeasure = true } else { onMeasure() }
+                    } label: {
+                        Label(measuredToday ? "Measure again" : "Morning measurement", systemImage: "heart.text.square")
+                    }
+                    Button { showLive = true } label: {
+                        Label("Live heart rate", systemImage: "waveform.path.ecg")
+                    }
+                } label: {
+                    Label("More", systemImage: "ellipsis")
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .padding()
-                .background(.bar)
+            }
+            .confirmationDialog("Measure again?", isPresented: $confirmRemeasure, titleVisibility: .visible) {
+                Button("Start a new measurement", action: onMeasure)
+            } message: {
+                Text("Today already has a measurement. The new one is kept as well, and the cleaner of the two counts for today's verdict.")
+            }
+            .fullScreenCover(isPresented: $showLive) { LiveMonitorView() }
+            .task { if AppSettings.debugLiveMonitor { showLive = true } }
+            .safeAreaInset(edge: .bottom) {
+                if !measuredToday || lowBattery {
+                    VStack(spacing: 8) {
+                        if lowBattery, let bandBattery {
+                            Label("Sensor battery \(bandBattery) %. Charge it before the next measurement.",
+                                  systemImage: BatteryLabel.symbol(bandBattery))
+                                .font(.footnote).foregroundStyle(Palette.alert)
+                        }
+                        if !measuredToday {
+                            Button(action: onMeasure) {
+                                Label("Measure now", systemImage: "heart.fill")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .prominentButton()
+                            .controlSize(.large)
+                        }
+                    }
+                    .padding()
+                    .background(.bar)
+                }
             }
         }
     }
@@ -54,7 +97,7 @@ struct WhySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Why").font(.headline)
+            Text(assessment.score == nil ? "This morning" : "Why").font(.headline)
             let r = assessment.record
             if let m = assessment.lnMean, let sd = assessment.lnSD {
                 WhyRow(title: "Heart rate variability", info: .lnRMSSD,
@@ -99,7 +142,8 @@ struct WhySection: View {
                    detail: r.lowQuality
                        ? "Noisy reading. Treat the verdict with caution."
                        : "Clean reading. The numbers can be trusted.") { EmptyView() }
-            ForEach(assessment.notes, id: \.self) { note in
+            // While building the baseline the first note repeats the panel's progress, so it is left out.
+            ForEach(assessment.score == nil ? Array(assessment.notes.dropFirst()) : assessment.notes, id: \.self) { note in
                 Label(note, systemImage: "text.quote")
                     .font(.callout)
                     .padding(12)
@@ -114,8 +158,10 @@ struct WhySection: View {
     }
 
     private var baselineText: String {
-        let left = max(0, Readiness.minBaselineDays - assessment.baselineN)
-        return "Your normal range appears after \(Readiness.minBaselineDays) mornings; \(left) more to go. Until then values are stored, not judged."
+        let left = Readiness.minBaselineDays - assessment.baselineRecorded
+        return left > 0
+            ? "Your normal range appears after \(Readiness.minBaselineDays) mornings; \(left) more to go. Until then values are stored, not judged."
+            : "Stored for your baseline. Your normal range appears with the next morning."
     }
 
     /// Plain-language position against the personal range, without statistics jargon.
@@ -211,7 +257,7 @@ struct EmptyToday: View {
         ContentUnavailableView {
             Label("No measurements yet", systemImage: "heart.text.square")
         } description: {
-            Text("Put the band on the inner forearm right after waking, lie still, and tap Measure now. After seven mornings the app starts giving verdicts against your own baseline.")
+            Text("Put on your heart-rate sensor right after waking, lie still, and tap Measure now. After seven mornings the app starts giving verdicts against your own baseline.")
         }
     }
 }

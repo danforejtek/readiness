@@ -17,6 +17,9 @@ struct RootView: View {
             TrendsView()
                 .tabItem { Label("Trends", systemImage: "chart.xyaxis.line") }
                 .tag("trends")
+            InsightsView()
+                .tabItem { Label("Insights", systemImage: "lightbulb") }
+                .tag("insights")
             HistoryView()
                 .tabItem { Label("History", systemImage: "list.bullet.rectangle") }
                 .tag("history")
@@ -29,7 +32,7 @@ struct RootView: View {
         }
         .task {
             MorningStore.backfillBeatDerived(in: context)
-            if AppSettings.debugLoadDemo { PreviewData.loadDemo(into: context) }
+            if AppSettings.debugLoadDemo { PreviewData.loadDemo(into: context, days: AppSettings.debugDemoDays) }
             if AppSettings.debugAutoMeasure { showMeasure = true }
             if AppSettings.debugHealthTest {
                 UserDefaults.standard.set(true, forKey: AppSettings.healthEnabledKey)

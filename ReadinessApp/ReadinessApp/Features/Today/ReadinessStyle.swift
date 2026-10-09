@@ -4,10 +4,10 @@ import SwiftUI
 extension ReadinessStatus {
     var color: Color {
         switch self {
-        case .ready: return .green
-        case .moderate: return .yellow
-        case .rest: return .red
-        case .baseline: return .teal
+        case .ready: return Palette.good
+        case .moderate: return Palette.caution
+        case .rest: return Palette.alert
+        case .baseline: return Palette.calm
         }
     }
 

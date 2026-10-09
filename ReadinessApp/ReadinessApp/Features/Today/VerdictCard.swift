@@ -5,6 +5,14 @@ struct VerdictCard: View {
     let assessment: Assessment
 
     var body: some View {
+        if assessment.score == nil {
+            BaselinePanel(assessment: assessment)
+        } else {
+            verdict
+        }
+    }
+
+    @ViewBuilder private var verdict: some View {
         let status = assessment.status
         HStack(alignment: .top, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
@@ -15,10 +23,10 @@ struct VerdictCard: View {
                     .foregroundStyle(.secondary)
                 HStack(spacing: 8) {
                     if assessment.illness {
-                        Badge(text: "Possible illness", color: .red, symbol: "thermometer.medium")
+                        Badge(text: "Possible illness", color: Palette.alert, symbol: "thermometer.medium")
                     }
                     if assessment.lowConfidence {
-                        Badge(text: "Low confidence", color: .orange, symbol: "exclamationmark.triangle")
+                        Badge(text: "Low confidence", color: Palette.caution, symbol: "exclamationmark.triangle")
                     }
                 }
                 Text(Fmt.dayTime.string(from: assessment.record.when))
@@ -29,8 +37,6 @@ struct VerdictCard: View {
             if let score = assessment.score {
                 ScoreRing(score: score, color: status.color)
                     .overlay(alignment: .topTrailing) { InfoButton(metric: .score).offset(x: 6, y: -6) }
-            } else {
-                BaselineProgress(done: assessment.baselineN, total: Readiness.minBaselineDays, color: status.color)
             }
         }
         .padding()
@@ -66,32 +72,11 @@ struct ScoreRing: View {
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 0) {
                 Text("\(score)").font(.title.weight(.bold)).monospacedDigit()
-                Text("of 100").font(.caption2).foregroundStyle(.secondary)
+                Text("/ 100").font(.caption2).foregroundStyle(.secondary)
             }
         }
         .frame(width: 92, height: 92)
         .accessibilityLabel("Readiness score \(score) of 100")
-    }
-}
-
-struct BaselineProgress: View {
-    let done: Int
-    let total: Int
-    let color: Color
-
-    var body: some View {
-        ZStack {
-            Circle().stroke(color.opacity(0.2), lineWidth: 10)
-            Circle()
-                .trim(from: 0, to: CGFloat(min(done, total)) / CGFloat(total))
-                .stroke(color, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            VStack(spacing: 0) {
-                Text("\(done)/\(total)").font(.title3.weight(.bold)).monospacedDigit()
-                Text("mornings").font(.caption2).foregroundStyle(.secondary)
-            }
-        }
-        .frame(width: 92, height: 92)
     }
 }
 
@@ -109,7 +94,7 @@ struct RangeBar: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.secondary.opacity(0.15))
                 Capsule()
-                    .fill(Color.green.opacity(0.35))
+                    .fill(Palette.good.opacity(0.35))
                     .frame(width: max(2, xPos(mean + 0.5 * sd, w) - xPos(mean - 0.5 * sd, w)))
                     .offset(x: xPos(mean - 0.5 * sd, w))
                 Circle()
@@ -131,8 +116,8 @@ struct RangeBar: View {
     private var markerColor: Color {
         let z = (value - mean) / sd
         let bad = higherIsBetter ? -z : z
-        if bad <= 0.5 { return .green }
-        if bad <= 1.5 { return .yellow }
-        return .red
+        if bad <= 0.5 { return Palette.good }
+        if bad <= 1.5 { return Palette.caution }
+        return Palette.alert
     }
 }

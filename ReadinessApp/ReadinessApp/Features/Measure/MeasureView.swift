@@ -7,6 +7,7 @@ struct MeasureView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Query(sort: \Morning.date) private var mornings: [Morning]
+    @AppStorage(AppSettings.baselineResetsKey) private var baselineResets = ""
     @State private var session = MeasurementSession()
     var autoStart = false
 
@@ -24,7 +25,7 @@ struct MeasureView: View {
                     LiveMeasureView(session: session)
                 case .result:
                     if let morning = session.result {
-                        ResultView(morning: morning, assessment: MorningStore.assessment(for: morning, in: mornings)) { dismiss() }
+                        ResultView(morning: morning, assessment: MorningStore.assessment(for: morning, in: mornings, resets: AppSettings.parseResets(baselineResets))) { dismiss() }
                     }
                 case .failed(let message):
                     ContentUnavailableView {
@@ -33,7 +34,7 @@ struct MeasureView: View {
                         Text(message)
                     } actions: {
                         Button("Try again") { session.start(source: SourceFactory.make(), context: context) }
-                            .buttonStyle(.borderedProminent)
+                            .prominentButton()
                     }
                 }
             }
@@ -69,17 +70,22 @@ private struct IntroView: View {
             Image(systemName: "bed.double.fill").font(.system(size: 56)).foregroundStyle(.tint)
             VStack(alignment: .leading, spacing: 12) {
                 Step(n: 1, text: "Right after waking, before coffee, phone or getting up.")
-                Step(n: 2, text: "Band snug on the inner forearm, switched on (blue blinking).")
+                Step(n: 2, text: "Heart-rate sensor on and awake, snug with good skin contact (chest strap electrodes moistened).")
                 Step(n: 3, text: "Lie on your back, arm relaxed, breathe normally.")
                 Step(n: 4, text: "\(Fmt.mmss(settleS)) to settle, then \(Fmt.mmss(durationS)) of measurement. The clock starts with the first heartbeat.")
             }
             .padding()
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
+            if AppSettings.useBand, let battery = AppSettings.bandBattery, battery < AppSettings.lowBatteryPercent {
+                Label("The sensor was at \(battery) % last time. Charge it if the measurement drops out.",
+                      systemImage: BatteryLabel.symbol(battery))
+                    .font(.footnote).foregroundStyle(Palette.alert)
+            }
             Spacer()
             Button(action: start) {
                 Label("Start", systemImage: "play.fill").font(.headline).frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .prominentButton()
             .controlSize(.large)
         }
         .padding()
@@ -103,7 +109,7 @@ private struct ConnectingView: View {
         VStack(spacing: 16) {
             ProgressView().controlSize(.large)
             Text(status).foregroundStyle(.secondary)
-            Text("If nothing happens: is the band on and blinking blue? Is another app connected to it?")
+            Text("If nothing happens: is the sensor on and awake? Is another app or a watch connected to it?")
                 .font(.footnote).foregroundStyle(.tertiary).multilineTextAlignment(.center)
         }
         .padding()
@@ -119,10 +125,10 @@ struct LiveMeasureView: View {
         let remaining = settling ? session.settleRemaining : session.measureRemaining
         VStack(spacing: 20) {
             ZStack {
-                Circle().stroke(Color.secondary.opacity(0.15), lineWidth: 14)
+                Circle().stroke((settling ? Palette.calm : Palette.measure).opacity(0.15), lineWidth: 14)
                 Circle()
                     .trim(from: 0, to: total > 0 ? CGFloat(1 - remaining / total) : 0)
-                    .stroke(settling ? Color.orange : Color.red, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                    .stroke(settling ? Palette.calm : Palette.measure, style: StrokeStyle(lineWidth: 14, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 0.25), value: remaining)
                 VStack(spacing: 4) {
@@ -132,7 +138,7 @@ struct LiveMeasureView: View {
                     }
                     Text(settling ? "settling \(Fmt.mmss(remaining))" : Fmt.mmss(remaining))
                         .font(.title3.weight(.semibold)).monospacedDigit()
-                        .foregroundStyle(settling ? .orange : .primary)
+                        .foregroundStyle(settling ? Palette.calm : .primary)
                 }
             }
             .frame(width: 220, height: 220)
@@ -142,10 +148,10 @@ struct LiveMeasureView: View {
 
             Chart(session.tachogram.suffix(70)) { p in
                 LineMark(x: .value("s", p.t), y: .value("RR", p.rr))
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Palette.measure)
                     .interpolationMethod(.monotone)
                 if !p.accepted {
-                    PointMark(x: .value("s", p.t), y: .value("RR", p.rr)).foregroundStyle(.orange)
+                    PointMark(x: .value("s", p.t), y: .value("RR", p.rr)).foregroundStyle(Palette.caution)
                 }
             }
             .chartYScale(domain: .automatic(includesZero: false))
@@ -163,16 +169,19 @@ struct LiveMeasureView: View {
 
             if session.artefactPct > 10, session.cleanBeats > 10 {
                 Label("Hold the arm still and relax the hand", systemImage: "hand.raised")
-                    .font(.footnote).foregroundStyle(.orange)
+                    .font(.footnote).foregroundStyle(Palette.caution)
             }
             if session.interrupted {
                 Label("Connection dropped during the measurement; the clock paused while reconnecting", systemImage: "antenna.radiowaves.left.and.right.slash")
-                    .font(.footnote).foregroundStyle(.orange)
+                    .font(.footnote).foregroundStyle(Palette.caution)
             }
             Spacer()
             if let batt = session.battery {
-                Label("\(session.deviceName) · battery \(batt) %", systemImage: "battery.75percent")
-                    .font(.caption).foregroundStyle(.tertiary)
+                HStack(spacing: 6) {
+                    Text(session.deviceName).foregroundStyle(.secondary)
+                    BatteryLabel(percent: batt)
+                }
+                .font(.footnote)
             }
         }
         .padding(.bottom)
@@ -200,7 +209,7 @@ struct ResultView: View {
         }
         .safeAreaInset(edge: .bottom) {
             Button(action: done) { Text("Done").font(.headline).frame(maxWidth: .infinity) }
-                .buttonStyle(.borderedProminent).controlSize(.large).padding().background(.bar)
+                .prominentButton().controlSize(.large).padding().background(.bar)
         }
     }
 }

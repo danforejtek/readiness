@@ -5,11 +5,12 @@ import SwiftUI
 
 struct TrendsView: View {
     @Query(sort: \Morning.date) private var mornings: [Morning]
+    @AppStorage(AppSettings.baselineResetsKey) private var baselineResets = ""
     @State private var rangeDays = 30
     @State private var selectedDay: Date?
 
     private var days: [DayAssessment] {
-        let all = MorningStore.dayAssessments(mornings)
+        let all = MorningStore.dayAssessments(mornings, resets: AppSettings.parseResets(baselineResets))
         guard let last = all.last else { return [] }
         let cutoff = Readiness.calendar.date(byAdding: .day, value: -rangeDays, to: last.day)!
         return all.filter { $0.day >= cutoff }
@@ -42,10 +43,10 @@ struct TrendsView: View {
                             HRChart(days: days, selection: $selectedDay)
                         }
                         ChartCard(title: "Regeneration", subtitle: "0–10 · 5 = your normal · green band = normal range 4–6") {
-                            IndexChart(days: days, value: \.regeneration, direction: .higherIsBetter, selection: $selectedDay)
+                            IndexChart(days: days, value: \.regeneration, direction: .higherIsBetter, tint: Palette.regeneration, selection: $selectedDay)
                         }
                         ChartCard(title: "Stress", subtitle: "0–10 · 5 = your normal · higher = more strain") {
-                            IndexChart(days: days, value: \.stress, direction: .lowerIsBetter, selection: $selectedDay)
+                            IndexChart(days: days, value: \.stress, direction: .lowerIsBetter, tint: Palette.stress, selection: $selectedDay)
                         }
                         ChartCard(title: "Readiness score", subtitle: "75 = your normal morning") {
                             ScoreChart(days: days, selection: $selectedDay)
@@ -115,7 +116,7 @@ struct HRVChart: View {
             ForEach(days) { d in
                 if let r = d.assessment.lnRange {
                     AreaMark(x: .value("Day", d.day), yStart: .value("Low", r.lowerBound), yEnd: .value("High", r.upperBound))
-                        .foregroundStyle(.green.opacity(0.18))
+                        .foregroundStyle(Palette.good.opacity(0.18))
                         .interpolationMethod(.monotone)
                 }
             }
@@ -154,7 +155,7 @@ struct HRChart: View {
             ForEach(days) { d in
                 if let r = d.assessment.hrRange {
                     AreaMark(x: .value("Day", d.day), yStart: .value("Low", r.lowerBound), yEnd: .value("High", r.upperBound))
-                        .foregroundStyle(.green.opacity(0.18))
+                        .foregroundStyle(Palette.good.opacity(0.18))
                         .interpolationMethod(.monotone)
                 }
             }
@@ -163,7 +164,7 @@ struct HRChart: View {
                     .foregroundStyle(.primary.opacity(0.6))
                     .interpolationMethod(.monotone)
                 PointMark(x: .value("Day", d.day), y: .value("HR", d.assessment.record.meanHR))
-                    .foregroundStyle(d.assessment.illness ? .red : d.assessment.status.color)
+                    .foregroundStyle(d.assessment.illness ? Palette.alert : d.assessment.status.color)
                     .symbolSize(d.assessment.illness ? 90 : days.pointSize)
             }
             if let selection {
@@ -181,18 +182,20 @@ struct IndexChart: View {
     let days: [DayAssessment]
     let value: KeyPath<Assessment, Double?>
     let direction: MetricDirection
+    /// Line colour, the same identity colour as the ring on Today.
+    let tint: Color
     @Binding var selection: Date?
 
     var body: some View {
         let band = IndexLevel.normalRange
         Chart {
             RectangleMark(yStart: .value("Low", band.lowerBound), yEnd: .value("High", band.upperBound))
-                .foregroundStyle(.green.opacity(0.15))
+                .foregroundStyle(Palette.good.opacity(0.15))
             RuleMark(y: .value("Normal", Readiness.indexCenter)).foregroundStyle(.secondary.opacity(0.4)).lineStyle(StrokeStyle(dash: [3, 3]))
             ForEach(days) { d in
                 if let v = d.assessment[keyPath: value] {
                     LineMark(x: .value("Day", d.day), y: .value("Value", v))
-                        .foregroundStyle(.primary.opacity(0.6))
+                        .foregroundStyle(tint.opacity(0.8))
                         .interpolationMethod(.monotone)
                     PointMark(x: .value("Day", d.day), y: .value("Value", v))
                         .foregroundStyle(IndexLevel(value: v, direction: direction).color)
@@ -246,8 +249,8 @@ struct BreathingChart: View {
         Chart {
             ForEach(days) { d in
                 if let b = d.assessment.record.breathingRate {
-                    LineMark(x: .value("Day", d.day), y: .value("Breaths", b)).foregroundStyle(.teal).interpolationMethod(.monotone)
-                    PointMark(x: .value("Day", d.day), y: .value("Breaths", b)).foregroundStyle(.teal).symbolSize(30)
+                    LineMark(x: .value("Day", d.day), y: .value("Breaths", b)).foregroundStyle(Palette.accent).interpolationMethod(.monotone)
+                    PointMark(x: .value("Day", d.day), y: .value("Breaths", b)).foregroundStyle(Palette.accent).symbolSize(30)
                 }
             }
             if let selection {
