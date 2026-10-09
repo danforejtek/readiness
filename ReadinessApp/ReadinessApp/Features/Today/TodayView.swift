@@ -105,8 +105,9 @@ struct WhySection: View {
                        change: assessment.lnChange, direction: .higherIsBetter,
                        detail: Self.deviationText(assessment.zHRV, range: assessment.lnRange, digits: 2, unit: "",
                                                   above: "a sign of good recovery.",
-                                                  below: "your body is dealing with more strain than usual.")) {
-                    RangeBar(value: r.lnRMSSD, mean: m, sd: sd, higherIsBetter: true)
+                                                  below: "your body is dealing with more strain than usual.",
+                                                  noiseFloor: Readiness.moderateZHRV)) {
+                    RangeBar(value: r.lnRMSSD, mean: m, sd: sd, higherIsBetter: true, cautionFrom: -Readiness.moderateZHRV)
                 }
             } else {
                 WhyRow(title: "Heart rate variability", info: .lnRMSSD,
@@ -166,12 +167,17 @@ struct WhySection: View {
             : "Stored for your baseline. Your normal range appears with the next morning."
     }
 
-    /// Plain-language position against the personal range, without statistics jargon.
+    /// Plain-language position against the personal range, without statistics jargon. With `noiseFloor` (today's HRV:
+    /// `Readiness.moderateZHRV`), a value below the range but above that z is day-to-day noise and does not change the
+    /// verdict, so the text says so instead of naming a cause.
     static func deviationText(_ z: Double?, range: ClosedRange<Double>?, digits: Int, unit: String,
-                              above: String, below: String) -> String {
+                              above: String, below: String, noiseFloor: Double? = nil) -> String {
         guard let z, let range else { return "" }
         let rangeText = "\(Fmt.n(range.lowerBound, digits))–\(Fmt.n(range.upperBound, digits))\(unit)"
         if abs(z) <= 0.5 { return "Inside your normal range of \(rangeText)." }
+        if let noiseFloor, z < 0, z > noiseFloor {
+            return "Slightly below your normal range of \(rangeText), within the day-to-day noise."
+        }
         let size = abs(z) <= 1 ? "Slightly" : abs(z) <= 1.5 ? "Clearly" : "Far"
         return z > 0
             ? "\(size) above your normal range of \(rangeText): \(above)"

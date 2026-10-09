@@ -39,6 +39,12 @@ or ask Claude to build and install). Tick items off as you go and note anything 
 - [ ] During a measurement, walk away from the phone until it disconnects, come back within a minute: the
       countdown pauses and resumes. Stay away longer than 60 s: the measurement fails with a message.
 
+## Settle period
+
+- [ ] The measurement intro says "1:00 to settle, then 2:00 of measurement", and Settings › Morning protocol
+      shows *Settle: 60 s*. If it still shows 15 s, the value was changed in Settings before: step it up to 60.
+- [ ] During a measurement the ring counts down the 1:00 settle before the 2:00 start.
+
 ## Measurement extension
 
 - [ ] Start a measurement and keep moving the arm or loosen the band so many beats are rejected (amber dots).

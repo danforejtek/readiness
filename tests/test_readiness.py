@@ -65,25 +65,82 @@ class ReadinessTests(unittest.TestCase):
         self.assertEqual(a.status, READY)
         self.assertTrue(65 <= a.score <= 85, a.score)
         self.assertFalse(a.illness)
+        self.assertFalse(a.illness_signal)
 
     def test_low_hrv_is_moderate_or_rest(self):
-        recs = add_day(make_history(), ln=3.85, hr=53.0)   # ~ -2 SD on HRV, HR normal-ish
+        recs = add_day(make_history(), ln=3.85, hr=53.0)   # ~ -2.5 SD on HRV, HR normal-ish
         a = assess(recs)
+        self.assertLessEqual(a.z_hrv, -1.0)
         self.assertIn(a.status, (MODERATE, REST))
         self.assertLess(a.score, 70)
+
+    def _day_at(self, z_hrv):
+        """A normal history plus today at `z_hrv` SD on HRV, with resting HR exactly on its mean."""
+        recs = make_history()
+        ln = [r.ln_rmssd for r in recs]
+        hr = statistics.fmean(r.mean_hr for r in recs)
+        a = assess(add_day(recs, ln=statistics.fmean(ln) + z_hrv * statistics.stdev(ln), hr=hr))
+        self.assertAlmostEqual(a.z_hrv, z_hrv)
+        self.assertAlmostEqual(a.z_hr, 0.0)
+        self.assertGreaterEqual(a.ln_week, a.ln_range[0])          # the week is normal
+        return a
+
+    def test_single_day_below_range_but_above_minus_one_sd_is_ready(self):
+        # one morning between -0.5 and -1 SD is day-to-day noise (Kiviniemi 2007, Plews 2012/2013)
+        a = self._day_at(-0.7)
+        self.assertLess(a.record.ln_rmssd, a.ln_range[0])           # below the ±0.5 SD range shown …
+        self.assertEqual(a.status, READY)                           # … but not a MODERATE day
+        self.assertEqual(Params().moderate_z_hrv, -1.0)
+
+    def test_single_day_at_minus_one_sd_is_moderate(self):
+        a = self._day_at(-1.1)
+        self.assertEqual(a.status, MODERATE)
+        self.assertTrue(any("Slightly off your normal" in n for n in a.notes))
+        # the old −0.5 SD trigger is still available as a parameter
+        recs = make_history()
+        ln = [r.ln_rmssd for r in recs]
+        hr = statistics.fmean(r.mean_hr for r in recs)
+        recs = add_day(recs, ln=statistics.fmean(ln) - 0.7 * statistics.stdev(ln), hr=hr)
+        self.assertEqual(assess(recs, params=Params(moderate_z_hrv=-0.5)).status, MODERATE)
 
     def test_illness_pattern(self):
         recs = add_day(make_history(), ln=3.80, hr=60.0)   # HRV down, HR +8 bpm
         a = assess(recs)
+        # one morning is a signal, not yet the warning: the ordinary rules decide (resting HR z ≥ 1.5 → rest)
+        self.assertTrue(a.illness_signal)
+        self.assertFalse(a.illness)
+        self.assertEqual(a.illness_streak, 1)
+        self.assertEqual(a.status, REST)
+        self.assertTrue(any(n.startswith("Resting HR is 8 bpm above your normal and HRV is below your normal. "
+                                         "One morning like this can be alcohol, poor sleep, travel or stress; "
+                                         "if it is the same tomorrow the app raises the illness warning.")
+                            for n in a.notes))
+        self.assertFalse(any("one to three days before a cold" in n for n in a.notes))
+        self.assertTrue(any("Clearly off your normal" in n for n in a.notes))
+        # the second morning in a row raises the warning
+        a = assess(add_day(recs, ln=3.80, hr=60.0))
+        self.assertTrue(a.illness_signal)
         self.assertTrue(a.illness)
+        self.assertEqual(a.illness_streak, 2)
         self.assertEqual(a.status, REST)
         self.assertTrue(any("one to three days before a cold or other infection" in n for n in a.notes))
         # the same pattern has other causes, and the note says so
         self.assertTrue(any("alcohol, poor sleep, travel and stress produce it too" in n for n in a.notes))
+        self.assertFalse(any("if it is the same tomorrow" in n for n in a.notes))
+        self.assertFalse(any("Clearly off your normal" in n for n in a.notes))
+        self.assertEqual(Params().illness_min_days, 2)
+        # illness_min_days=1 restores the single-morning warning
+        self.assertTrue(assess(recs, params=Params(illness_min_days=1)).illness)
 
     def test_illness_by_heart_rate_alone_does_not_claim_low_hrv(self):
         recs = add_day(make_history(), ln=4.02, hr=61.0)   # HRV normal, HR +9 bpm
         a = assess(recs)
+        self.assertTrue(a.illness_signal)
+        self.assertFalse(a.illness)
+        self.assertTrue(any(n.startswith("Resting HR is 9 bpm above your normal. One morning like this can be "
+                                         "alcohol, poor sleep, travel or stress;") for n in a.notes))
+        self.assertFalse(any("HRV is below" in n for n in a.notes))
+        a = assess(add_day(recs, ln=4.02, hr=61.0))
         self.assertTrue(a.illness)
         self.assertGreater(a.z_hrv, -1.0)
         self.assertFalse(any("HRV is below" in n for n in a.notes))
@@ -97,6 +154,7 @@ class ReadinessTests(unittest.TestCase):
         a = assess(add_day(recs, ln=4.0, hr=hr_mean + 3.8))
         self.assertEqual(a.hr_sd, 1.5)
         self.assertGreaterEqual(a.z_hr, 2.5)
+        self.assertFalse(a.illness_signal)
         self.assertFalse(a.illness)
         self.assertEqual(a.status, REST)            # still far off: HR z ≥ 1.5
 
@@ -126,9 +184,10 @@ class ReadinessTests(unittest.TestCase):
         recs.append(DayRecord(day=when.date(), when=when, ln_rmssd=3.78, rmssd=55.0, mean_hr=61.0,
                               sdnn=60.0, beats=120, artefact_pct=2.0))
         a = assess(recs)
-        self.assertTrue(a.illness)
-        self.assertTrue(assess(recs, len(recs) - 2).illness)
+        self.assertTrue(a.illness_signal)
+        self.assertTrue(assess(recs, len(recs) - 2).illness_signal)
         self.assertEqual(a.illness_streak, 1)
+        self.assertFalse(a.illness)                          # two flagged mornings, but not in a row
 
     def test_long_illness_streak_stays_fast(self):
         # the streak used to recurse through assess(); 14 flagged days in a row took thousands of calls

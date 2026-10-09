@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Morning.date) private var mornings: [Morning]
-    @AppStorage(AppSettings.settleSecondsKey) private var settleSeconds = 15.0
+    @AppStorage(AppSettings.settleSecondsKey) private var settleSeconds = AppSettings.defaultSettleSeconds
     @AppStorage(AppSettings.measureSecondsKey) private var measureSeconds = 120.0
     @AppStorage(AppSettings.useBandKey) private var useBand = !AppSettings.isSimulator
     @AppStorage(AppSettings.replayFixtureKey) private var replayFixture = "morning-session"
@@ -46,7 +46,7 @@ struct SettingsView: View {
                 Section("Morning protocol") {
                     Stepper("Settle: \(Int(settleSeconds)) s", value: $settleSeconds, in: 0...60, step: 5)
                     Stepper("Measure: \(Int(measureSeconds)) s", value: $measureSeconds, in: 60...300, step: 30)
-                    Text("120 s is the usual length for a morning HRV reading. Keep the same protocol every day so values stay comparable.")
+                    Text("60 s to settle and 120 s of measurement is the usual morning HRV reading. Keep the same protocol every day so values stay comparable.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Heart-rate source") {

@@ -18,7 +18,7 @@ struct PyAssessment: Decodable {
     let status: String; let score: Int?; let baseline_n: Int; let ln_mean: Double?; let ln_sd: Double?; let ln_week: Double?
     let week_n: Int
     let hr_mean: Double?; let hr_sd: Double?; let z_hrv: Double?; let z_hr: Double?; let illness: Bool
-    let illness_streak: Int; let low_confidence: Bool; let notes: [String]
+    let illness_signal: Bool; let illness_streak: Int; let low_confidence: Bool; let notes: [String]
     let regeneration: Double?; let stress: Double?; let z_regeneration: Double?; let z_stress: Double?
     /// [vs average %, vs last %]
     let ln_change: [Double?]; let hr_change: [Double?]; let regeneration_change: [Double?]; let stress_change: [Double?]
@@ -49,6 +49,7 @@ final class ReadinessTests: XCTestCase {
             XCTAssertEqual(a.baselineN, py.baseline_n, ctx)
             XCTAssertEqual(a.weekN, py.week_n, ctx)
             XCTAssertEqual(a.illness, py.illness, ctx)
+            XCTAssertEqual(a.illnessSignal, py.illness_signal, ctx)
             XCTAssertEqual(a.illnessStreak, py.illness_streak, ctx)
             XCTAssertEqual(a.lowConfidence, py.low_confidence, ctx)
             XCTAssertEqual(a.notes, py.notes, ctx)
@@ -72,6 +73,15 @@ final class ReadinessTests: XCTestCase {
         XCTAssertEqual(statuses, ["baseline", "ready", "moderate", "rest"])
         XCTAssertTrue(fx.assessments.contains { $0.illness_streak == 2 })
         XCTAssertTrue(fx.assessments.contains { $0.illness_streak == 3 })
+        // one flagged morning is a signal with a note, not the warning; the second in a row raises it
+        XCTAssertTrue(fx.assessments.contains { $0.illness_signal && !$0.illness && $0.illness_streak == 1 })
+        XCTAssertTrue(fx.assessments.allSatisfy { $0.illness == ($0.illness_signal && $0.illness_streak >= Readiness.illnessMinDays) })
+        XCTAssertTrue(fx.assessments.contains { $0.illness && $0.illness_streak == Readiness.illnessMinDays })
+        // a single morning between −1 and −0.5 SD on HRV, resting HR normal, is still READY (Kiviniemi 2007)
+        XCTAssertTrue(fx.assessments.contains { a in
+            guard let z = a.z_hrv, let zHR = a.z_hr else { return false }
+            return z < -0.5 && z > Readiness.moderateZHRV && zHR <= 1.0 && a.status == "ready"
+        })
         // resting HR z ≥ 2.5 but less than 4 bpm up is not an illness warning
         XCTAssertTrue(fx.assessments.contains { ($0.z_hr ?? 0) >= 2.5 && !$0.illness })
         // after a noisy morning the baseline leaves it out
@@ -119,6 +129,10 @@ final class ReadinessTests: XCTestCase {
         let notes = Readiness.assessAll(records).flatMap(\.notes)
         XCTAssertTrue(notes.contains { $0.contains("one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too") })
         XCTAssertTrue(notes.contains { $0.contains("far outside your usual range. Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this.") })
+        // the softer single-morning note, with and without the HRV part
+        let soft = "One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning."
+        XCTAssertTrue(notes.contains { $0.contains("above your normal and HRV is below your normal. " + soft) })
+        XCTAssertTrue(notes.contains { $0.hasPrefix("Resting HR is") && $0.contains("bpm above your normal. " + soft) })
     }
 
     func testIllnessStreakIsLinearAndUncapped() throws {
@@ -135,6 +149,10 @@ final class ReadinessTests: XCTestCase {
         let all = Readiness.assessAll(records)
         XCTAssertLessThan(Date().timeIntervalSince(begin), 1.0)
         XCTAssertEqual(all.last?.illnessStreak, 14)
+        XCTAssertEqual(all[46].illnessStreak, 1)
+        XCTAssertTrue(all[46].illnessSignal)
+        XCTAssertFalse(all[46].illness)
+        XCTAssertTrue(all[47].illness)
         // a day without a measurement ends the streak
         var gap = records
         gap.remove(at: 55)

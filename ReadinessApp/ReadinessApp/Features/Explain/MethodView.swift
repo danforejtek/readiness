@@ -7,7 +7,7 @@ struct MethodView: View {
         List {
             Section("The measurement") {
                 Para("Measure right after waking, before you get up, coffee or phone. Lie on your back in the same position every day. Empty your bladder first, or always do the same. A full bladder raises your blood pressure.")
-                Para("Put on your heart-rate sensor so it sits snugly with good skin contact: a chest strap with moistened electrodes, or an armband on the forearm. The first \(Int(AppSettings.settleSeconds)) seconds let your heart settle and are not used. The next \(Int(AppSettings.measureSeconds)) seconds are measured. If too many beats are rejected and fewer than \(AppSettings.minCleanBeats) clean ones are in by then, the app keeps measuring for up to \(Int(AppSettings.maxExtensionS)) seconds more.")
+                Para("Put on your heart-rate sensor so it sits snugly with good skin contact: a chest strap with moistened electrodes, or an armband on the forearm. The first \(Int(AppSettings.settleSeconds)) seconds let your heart rate level off after lying down and are not used; studies let it settle for about a minute. The next \(Int(AppSettings.measureSeconds)) seconds are measured. If too many beats are rejected and fewer than \(AppSettings.minCleanBeats) clean ones are in by then, the app keeps measuring for up to \(Int(AppSettings.maxExtensionS)) seconds more.")
                 Para("Breathe normally. Moving, talking or a loose sensor produce rejected beats and a less reliable result.")
                 Para("An optical armband measures pulse-rate variability: the pulse at your arm, not the heart's electrical signal that an ECG chest strap records. At rest the two agree well, but the optical signal is more sensitive to arm movement, so keep the arm still.")
             }
@@ -20,12 +20,14 @@ struct MethodView: View {
             }
             Section("The verdict") {
                 Rule(status: .rest, text: "HRV 1.5 or more standard deviations below normal, or resting HR 1.5 or more above, or HRV at least 1 below together with resting HR at least 1 above, or the illness warning.")
-                Rule(status: .moderate, text: "HRV below your normal range, or resting HR more than 1 standard deviation above normal, or the 7-day HRV average below your range (with at least \(Readiness.weekMinDays) mornings in the week).")
+                Rule(status: .moderate, text: "HRV 1 or more standard deviations below normal, or resting HR more than 1 above, or the 7-day HRV average below your normal range (with at least \(Readiness.weekMinDays) mornings in the week).")
+                Para("A single morning's HRV only counts from 1 standard deviation below normal. Between the edge of your range and there it is day-to-day noise: about one ordinary morning in three lands below the range. The training studies that guided athletes by HRV acted on the 7-day average, or on single mornings at least 1 standard deviation down (Kiviniemi and colleagues, 2007; Plews and colleagues, 2012–2013). So the 7-day average keeps the half-standard-deviation range.")
                 Rule(status: .ready, text: "Everything else: HRV and resting HR where they usually are, or better.")
             }
             Section("Possible illness") {
-                Para("Raised when resting HR is at least 1.5 standard deviations and 4 bpm above normal while HRV is at least 1 standard deviation below, or when resting HR alone is at least 2.5 standard deviations and 4 bpm above normal.")
-                Para("This pattern often shows up one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. The limits are this app's rules of thumb, not taken from a study. Several days in a row make it more convincing than a single morning; the streak counts consecutive calendar days, so a day without a measurement ends it.")
+                Para("A morning is flagged when resting HR is at least 1.5 standard deviations and 4 bpm above normal while HRV is at least 1 standard deviation below, or when resting HR alone is at least 2.5 standard deviations and 4 bpm above normal.")
+                Para("The warning needs \(Readiness.illnessMinDays) flagged mornings in a row. A single one only adds a note, and the verdict follows the usual rules: one morning like this is often alcohol, poor sleep, travel or stress. The published detectors also look at several days, not one (Mishra and colleagues, 2020; Alavi and colleagues, 2022). The streak counts consecutive calendar days, so a day without a measurement ends it.")
+                Para("This pattern often shows up one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. The limits are this app's rules of thumb, not taken from a study.")
             }
             Section("The score") {
                 Para(Metric.score.explanation)

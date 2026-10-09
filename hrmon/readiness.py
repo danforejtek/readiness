@@ -7,9 +7,14 @@ Method (Plews & Buchheit; Altini / HRV4Training):
   * normal range = mean ± 0.5 SD (the "smallest worthwhile change")
   * 7-day rolling average of lnRMSSD shows accumulated fatigue when it drops below the normal range; it only
     counts towards the verdict with at least `week_min_days` (3) mornings in the window (Plews 2014)
-  * today's z-scores drive the verdict; a raised resting HR together with a lowered HRV often precedes an
-    infection, but alcohol, poor sleep, travel and stress produce it too; it raises the illness warning
-    (thresholds are heuristics, not taken from a study)
+  * today's z-scores drive the verdict. A single morning's HRV only counts from −1 SD (`moderate_z_hrv`), not
+    from the edge of the ±0.5 SD range: single days fall outside that range on many ordinary mornings, and the
+    HRV-guided training trials acted on the 7-day average or on single-day drops of at least 1 SD (Kiviniemi 2007;
+    Plews 2012/2013; docs/evidence.md, sections A and L)
+  * a raised resting HR together with a lowered HRV often precedes an infection, but alcohol, poor sleep, travel
+    and stress produce it too. One flagged morning (`illness_signal`) only adds a note; the illness warning needs
+    `illness_min_days` (2) flagged mornings in a row, as the published detectors use multi-day logic (Mishra 2020,
+    Alavi 2022; docs/evidence.md, section C). The thresholds are heuristics, not taken from a study
   * Regeneration and Stress (0–10, 5 = your normal, 4–6 = ±0.5 SD, 2 points = 1 SD), scored against the same
     personal, clean-only baseline as the verdict:
       Regeneration = z(lnRMSSD), your HRV against your own normal. SD1 is RMSSD/√2 and mean RR the reciprocal
@@ -60,7 +65,9 @@ class Params:
     rest_z_hr: float = 1.5           # resting HR z ≥ this, or both of the "combined" limits below
     rest_combo_z_hrv: float = -1.0
     rest_combo_z_hr: float = 1.0
-    moderate_z_hr: float = 1.0       # moderate if HRV below range, resting HR z > this, or 7-day average below range
+    moderate_z_hrv: float = -1.0     # moderate if HRV z ≤ this (Kiviniemi 2007), or
+    moderate_z_hr: float = 1.0       # resting HR z > this, or the 7-day average below the normal range
+    illness_min_days: int = 2        # flagged mornings in a row before the illness warning (one alone is a note)
     week_min_days: int = 3           # the 7-day average needs this many mornings before it can flag fatigue
     saturation_z: float = 1.5        # note when HRV z ≥ this and HR z ≤ −this
     low_quality_artefact_pct: float = 15.0
@@ -130,8 +137,9 @@ class Assessment:
     hr_sd: Optional[float] = None
     z_hrv: Optional[float] = None
     z_hr: Optional[float] = None
-    illness: bool = False
-    illness_streak: int = 0
+    illness: bool = False            # the illness warning: illness_streak ≥ illness_min_days
+    illness_signal: bool = False     # today's morning alone matches the illness pattern
+    illness_streak: int = 0          # flagged mornings in a row up to today (0 when today is not flagged)
     low_confidence: bool = False
     notes: list[str] = field(default_factory=list)
     range_sd: float = 0.5
@@ -346,14 +354,16 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
     composite = p.w_hrv * a.z_hrv - p.w_hr * a.z_hr
     a.score = int(max(0, min(100, round(75 + 15 * composite))))
 
-    # illness / systemic stress: raised resting HR together with suppressed HRV
-    a.illness = _illness_rule(today.mean_hr - a.hr_mean, a.z_hrv, a.z_hr, p)
-    if a.illness:
+    # illness / systemic stress: raised resting HR together with suppressed HRV; one morning is a signal, the
+    # warning needs illness_min_days of them in a row
+    a.illness_signal = _illness_rule(today.mean_hr - a.hr_mean, a.z_hrv, a.z_hr, p)
+    if a.illness_signal:
         # consecutive calendar days with the flag, walking back from today
         j = index
         while j > 0 and (records[j].day - records[j - 1].day).days == 1 and _ill(records, j - 1, p):
             j -= 1
         a.illness_streak = index - j + 1
+    a.illness = a.illness_signal and a.illness_streak >= p.illness_min_days
 
     week_low = (a.ln_week is not None and len(week) >= p.week_min_days
                 and a.ln_week < a.ln_mean - p.range_sd * a.ln_sd)
@@ -361,13 +371,13 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
     if (a.illness or a.z_hrv <= p.rest_z_hrv or a.z_hr >= p.rest_z_hr
             or (a.z_hrv <= p.rest_combo_z_hrv and a.z_hr >= p.rest_combo_z_hr)):
         a.status = REST
-    elif a.z_hrv < -p.range_sd or a.z_hr > p.moderate_z_hr or week_low:
+    elif a.z_hrv <= p.moderate_z_hrv or a.z_hr > p.moderate_z_hr or week_low:
         a.status = MODERATE
     else:
         a.status = READY
 
+    gap = today.mean_hr - a.hr_mean
     if a.illness:
-        gap = today.mean_hr - a.hr_mean
         days = f" for {a.illness_streak} days in a row" if a.illness_streak > 1 else ""
         if a.z_hrv <= p.illness_z_hrv:
             a.notes.append(f"Resting HR is {gap:.0f} bpm above your normal and HRV is below your normal{days}. "
@@ -378,6 +388,10 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
             a.notes.append(f"Resting HR is {gap:.0f} bpm above your normal{days}, far outside your usual range. "
                            "Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this. "
                            "Take it easy and watch for symptoms.")
+    elif a.illness_signal:
+        hrv = " and HRV is below your normal" if a.z_hrv <= p.illness_z_hrv else ""
+        a.notes.append(f"Resting HR is {gap:.0f} bpm above your normal{hrv}. One morning like this can be alcohol, "
+                       "poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.")
     if week_low:
         a.notes.append("Your 7-day HRV average is below your normal range. Fatigue has been building up "
                        "over several days, so plan an easier week.")

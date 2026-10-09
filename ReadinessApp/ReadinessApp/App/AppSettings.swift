@@ -25,7 +25,10 @@ enum AppSettings {
     static let minCleanBeats = 80
     static let maxExtensionS: Double = 60
 
-    static var settleSeconds: Double { UserDefaults.standard.object(forKey: settleSecondsKey) as? Double ?? 15 }
+    /// Default 60 s, as `SETTLE_S` in `hrmon/protocol.py`: about the minute the studies let the heart settle
+    /// (Flatt & Esco 2016, docs/evidence.md K).
+    static let defaultSettleSeconds: Double = 60
+    static var settleSeconds: Double { UserDefaults.standard.object(forKey: settleSecondsKey) as? Double ?? defaultSettleSeconds }
     static var measureSeconds: Double { UserDefaults.standard.object(forKey: measureSecondsKey) as? Double ?? 120 }
     static var replaySpeed: Double {
         if let env = ProcessInfo.processInfo.environment["READINESS_REPLAY_SPEED"], let v = Double(env) { return v }

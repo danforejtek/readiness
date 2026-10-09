@@ -817,7 +817,39 @@
    "stress_index": 112.11383602639663
   },
   {
-   "when": "2027-01-07 07:00",
+   "when": "2026-10-30 07:00",
+   "ln_rmssd": 4.02,
+   "rmssd": 55.70110582679559,
+   "mean_hr": 64.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null,
+   "mean_rr": 937.5,
+   "sd1": 39.386629649716674,
+   "sd2": 89.12176932287295,
+   "stress_index": 107.71778963701719
+  },
+  {
+   "when": "2026-10-31 07:00",
+   "ln_rmssd": 4.02,
+   "rmssd": 55.70110582679559,
+   "mean_hr": 64.0,
+   "sdnn": 60.0,
+   "beats": 120,
+   "artefact_pct": 2.0,
+   "hf_ms2": null,
+   "lf_ms2": null,
+   "breathing_rate": null,
+   "mean_rr": 937.5,
+   "sd1": 39.386629649716674,
+   "sd2": 89.12176932287295,
+   "stress_index": 107.71778963701719
+  },
+  {
+   "when": "2027-01-09 07:00",
    "ln_rmssd": 4.0,
    "rmssd": 54.598150033144236,
    "mean_hr": 52.0,
@@ -847,6 +879,7 @@
    "z_hrv": null,
    "z_hr": null,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -886,6 +919,7 @@
    "z_hrv": null,
    "z_hr": null,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -925,6 +959,7 @@
    "z_hrv": null,
    "z_hr": null,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -964,6 +999,7 @@
    "z_hrv": null,
    "z_hr": null,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1003,6 +1039,7 @@
    "z_hrv": null,
    "z_hr": null,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1042,6 +1079,7 @@
    "z_hrv": null,
    "z_hr": null,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1081,6 +1119,7 @@
    "z_hrv": null,
    "z_hr": null,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1120,6 +1159,7 @@
    "z_hrv": 1.5278568337901475,
    "z_hr": -0.4571428571428555,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1159,6 +1199,7 @@
    "z_hrv": -0.6236095644623235,
    "z_hr": 1.2000000000000028,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1198,6 +1239,7 @@
    "z_hrv": 0.723101526062184,
    "z_hr": 0.0,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1237,6 +1279,7 @@
    "z_hrv": -1.3416407864998738,
    "z_hr": -1.0666666666666675,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1276,6 +1319,7 @@
    "z_hrv": 0.11826247919781718,
    "z_hr": 0.6303030303030303,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1315,6 +1359,7 @@
    "z_hrv": 1.4771340097056507,
    "z_hr": -0.48888888888888954,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1354,6 +1399,7 @@
    "z_hrv": -0.6546536707079771,
    "z_hr": 1.1487179487179493,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1393,6 +1439,7 @@
    "z_hrv": 0.7182430061427757,
    "z_hr": 0.0,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1432,6 +1479,7 @@
    "z_hrv": -1.3662601021279464,
    "z_hr": -1.0666666666666675,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1471,6 +1519,7 @@
    "z_hrv": 0.08333333333333148,
    "z_hr": 0.5999999999999991,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1510,6 +1559,7 @@
    "z_hrv": 1.4577467612737423,
    "z_hr": -0.5019607843137237,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1549,6 +1599,7 @@
    "z_hrv": -0.6688560540599386,
    "z_hr": 1.1259259259259267,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1588,6 +1639,7 @@
    "z_hrv": 0.7156053649930533,
    "z_hr": 0.0,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1627,6 +1679,7 @@
    "z_hrv": -1.3784048752090223,
    "z_hr": -1.0666666666666675,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1666,6 +1719,7 @@
    "z_hrv": 0.0643489452087769,
    "z_hr": 0.5841269841269773,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1705,6 +1759,7 @@
    "z_hrv": 1.447496831283187,
    "z_hr": -0.5090909090909103,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1744,6 +1799,7 @@
    "z_hrv": -0.67700320038633,
    "z_hr": 1.1130434782608678,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1783,6 +1839,7 @@
    "z_hrv": 0.7139690280745039,
    "z_hr": 0.0,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1822,6 +1879,7 @@
    "z_hrv": -1.3856406460551018,
    "z_hr": -1.0666666666666675,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1861,6 +1919,7 @@
    "z_hrv": 0.05241424183609417,
    "z_hr": 0.5743589743589723,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1900,6 +1959,7 @@
    "z_hrv": 1.4411547438674155,
    "z_hr": -0.5135802469135816,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1939,6 +1999,7 @@
    "z_hrv": -0.6822882392210131,
    "z_hr": 1.1047619047619055,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -1978,6 +2039,7 @@
    "z_hrv": 0.712858309306279,
    "z_hr": 0.0,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2017,6 +2079,7 @@
    "z_hrv": 0.3476108935768958,
    "z_hr": 0.3333333333333333,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2056,6 +2119,7 @@
    "z_hrv": -0.01138202354171935,
    "z_hr": 2.589247311827956,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2095,6 +2159,7 @@
    "z_hrv": -2.7012672220847747,
    "z_hr": 0.5749999999999981,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2133,12 +2198,14 @@
    "hr_sd": 1.5,
    "z_hrv": -3.223381509912973,
    "z_hr": 5.224242424242424,
-   "illness": true,
+   "illness": false,
+   "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
    "notes": [
-    "Resting HR is 8 bpm above your normal and HRV is below your normal. This pattern often appears one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. Take it easy, drink enough, and watch for symptoms.",
-    "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week."
+    "Resting HR is 8 bpm above your normal and HRV is below your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
+    "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
+    "Clearly off your normal. Make it a recovery day with easy movement only."
    ],
    "regeneration": 0.0,
    "stress": 10.0,
@@ -2174,6 +2241,7 @@
    "z_hrv": -3.06156786214042,
    "z_hr": 4.638779099675127,
    "illness": true,
+   "illness_signal": true,
    "illness_streak": 2,
    "low_confidence": false,
    "notes": [
@@ -2214,6 +2282,7 @@
    "z_hrv": 0.20558054409834708,
    "z_hr": -0.27398032898779096,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": true,
    "notes": [
@@ -2255,6 +2324,7 @@
    "z_hrv": 4.1303000223394415,
    "z_hr": -2.842545913248329,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2293,11 +2363,13 @@
    "hr_sd": 2.554485628340239,
    "z_hrv": 0.2932091841938075,
    "z_hr": 3.344878651752738,
-   "illness": true,
+   "illness": false,
+   "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
    "notes": [
-    "Resting HR is 9 bpm above your normal, far outside your usual range. Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this. Take it easy and watch for symptoms."
+    "Resting HR is 9 bpm above your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
+    "Clearly off your normal. Make it a recovery day with easy movement only."
    ],
    "regeneration": 5.6,
    "stress": 9.3,
@@ -2333,6 +2405,7 @@
    "z_hrv": -0.7031006387023233,
    "z_hr": -0.2380348183912496,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2361,7 +2434,7 @@
    ]
   },
   {
-   "status": "moderate",
+   "status": "ready",
    "score": 70,
    "baseline_n": 38,
    "ln_mean": 3.9921052631578946,
@@ -2373,10 +2446,11 @@
    "z_hrv": -0.6894473128535986,
    "z_hr": -0.23478789735040628,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
+    "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 3.6,
    "stress": 5.1,
@@ -2400,7 +2474,7 @@
    ]
   },
   {
-   "status": "moderate",
+   "status": "ready",
    "score": 70,
    "baseline_n": 39,
    "ln_mean": 3.99051282051282,
@@ -2412,10 +2486,11 @@
    "z_hrv": -0.6765653140259201,
    "z_hr": -0.23167044573528092,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
+    "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 3.6,
    "stress": 5.1,
@@ -2439,7 +2514,7 @@
    ]
   },
   {
-   "status": "moderate",
+   "status": "ready",
    "score": 70,
    "baseline_n": 40,
    "ln_mean": 3.989,
@@ -2451,10 +2526,11 @@
    "z_hrv": -0.6643843426952261,
    "z_hr": -0.2286740742529721,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
+    "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 3.7,
    "stress": 5.1,
@@ -2478,7 +2554,7 @@
    ]
   },
   {
-   "status": "moderate",
+   "status": "ready",
    "score": 70,
    "baseline_n": 41,
    "ln_mean": 3.9875609756097563,
@@ -2490,10 +2566,11 @@
    "z_hrv": -0.6528427766474024,
    "z_hr": -0.22579113608804618,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
+    "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 3.7,
    "stress": 5.1,
@@ -2517,7 +2594,7 @@
    ]
   },
   {
-   "status": "moderate",
+   "status": "ready",
    "score": 70,
    "baseline_n": 42,
    "ln_mean": 3.986190476190476,
@@ -2529,10 +2606,11 @@
    "z_hrv": -0.6418863387348118,
    "z_hr": -0.22301464443116834,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
-    "Slightly off your normal. Training is fine, but keep the intensity moderate and listen to your body."
+    "HRV and resting HR are within your normal range. A good day for a hard session."
    ],
    "regeneration": 3.7,
    "stress": 5.1,
@@ -2567,12 +2645,14 @@
    "hr_sd": 2.680868192128418,
    "z_hrv": -2.127187585790639,
    "z_hr": 3.1367832071240356,
-   "illness": true,
+   "illness": false,
+   "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
    "notes": [
-    "Resting HR is 8 bpm above your normal and HRV is below your normal. This pattern often appears one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. Take it easy, drink enough, and watch for symptoms.",
-    "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week."
+    "Resting HR is 8 bpm above your normal and HRV is below your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
+    "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
+    "Clearly off your normal. Make it a recovery day with easy movement only."
    ],
    "regeneration": 0.7,
    "stress": 10.0,
@@ -2607,12 +2687,14 @@
    "hr_sd": 2.937193148923022,
    "z_hrv": -2.2222199256665545,
    "z_hr": 2.968201740964331,
-   "illness": true,
+   "illness": false,
+   "illness_signal": true,
    "illness_streak": 1,
    "low_confidence": false,
    "notes": [
-    "Resting HR is 9 bpm above your normal and HRV is below your normal. This pattern often appears one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. Take it easy, drink enough, and watch for symptoms.",
-    "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week."
+    "Resting HR is 9 bpm above your normal and HRV is below your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
+    "Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.",
+    "Clearly off your normal. Make it a recovery day with easy movement only."
    ],
    "regeneration": 0.6,
    "stress": 10.0,
@@ -2648,6 +2730,7 @@
    "z_hrv": -1.8716409588555418,
    "z_hr": 2.522453687117458,
    "illness": true,
+   "illness_signal": true,
    "illness_streak": 2,
    "low_confidence": false,
    "notes": [
@@ -2688,6 +2771,7 @@
    "z_hrv": -1.8869480523825233,
    "z_hr": 2.484524924237815,
    "illness": true,
+   "illness_signal": true,
    "illness_streak": 3,
    "low_confidence": false,
    "notes": [
@@ -2728,6 +2812,7 @@
    "z_hrv": -2.7057854159188106,
    "z_hr": -0.3750254168880306,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2767,6 +2852,7 @@
    "z_hrv": 0.16185465003319977,
    "z_hr": -0.37062799127112617,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2806,6 +2892,7 @@
    "z_hrv": 0.16018560901232376,
    "z_hr": -0.3663821064340341,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2834,6 +2921,87 @@
    ]
   },
   {
+   "status": "rest",
+   "score": 64,
+   "baseline_n": 50,
+   "ln_mean": 3.9636,
+   "ln_sd": 0.10342620360351983,
+   "ln_week": 3.92,
+   "week_n": 4,
+   "hr_mean": 53.248000000000005,
+   "hr_sd": 3.444856562281495,
+   "z_hrv": 0.5453163515138454,
+   "z_hr": 3.121174947522068,
+   "illness": false,
+   "illness_signal": true,
+   "illness_streak": 1,
+   "low_confidence": false,
+   "notes": [
+    "Resting HR is 11 bpm above your normal. One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.",
+    "Clearly off your normal. Make it a recovery day with easy movement only."
+   ],
+   "regeneration": 6.1,
+   "stress": 8.8,
+   "z_regeneration": 0.5453163515138454,
+   "z_stress": 1.8918659092295889,
+   "ln_change": [
+    5.802080742920235,
+    4.081077419238777
+   ],
+   "hr_change": [
+    20.192307692307683,
+    23.076923076923077
+   ],
+   "regeneration_change": [
+    21.999999999999993,
+    15.094339622641508
+   ],
+   "stress_change": [
+    76.00000000000001,
+    100.0
+   ]
+  },
+  {
+   "status": "rest",
+   "score": 65,
+   "baseline_n": 51,
+   "ln_mean": 3.964705882352941,
+   "ln_sd": 0.10269085531197937,
+   "ln_week": 3.94,
+   "week_n": 5,
+   "hr_mean": 53.45882352941177,
+   "hr_sd": 3.7277970154281865,
+   "z_hrv": 0.53845220666507,
+   "z_hr": 2.8277227614490807,
+   "illness": true,
+   "illness_signal": true,
+   "illness_streak": 2,
+   "low_confidence": false,
+   "notes": [
+    "Resting HR is 11 bpm above your normal for 2 days in a row, far outside your usual range. Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this. Take it easy and watch for symptoms."
+   ],
+   "regeneration": 6.1,
+   "stress": 8.4,
+   "z_regeneration": 0.53845220666507,
+   "z_stress": 1.6989135118246155,
+   "ln_change": [
+    5.685140761770868,
+    0.0
+   ],
+   "hr_change": [
+    19.718309859154928,
+    0.0
+   ],
+   "regeneration_change": [
+    21.999999999999993,
+    0.0
+   ],
+   "stress_change": [
+    68.00000000000001,
+    -4.545454545454549
+   ]
+  },
+  {
    "status": "baseline",
    "score": null,
    "baseline_n": 0,
@@ -2846,6 +3014,7 @@
    "z_hrv": null,
    "z_hr": null,
    "illness": false,
+   "illness_signal": false,
    "illness_streak": 0,
    "low_confidence": false,
    "notes": [
@@ -2857,11 +3026,11 @@
    "z_stress": null,
    "ln_change": [
     null,
-    2.0201340026755776
+    -1.9801326693244303
    ],
    "hr_change": [
     null,
-    0.0
+    -18.75
    ],
    "regeneration_change": [
     null,

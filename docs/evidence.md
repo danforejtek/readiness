@@ -29,9 +29,10 @@ Buchheit 2014 argues the same: interpret a change against the measurement error 
 and in the context of the training.
 
 **App today:** lnRMSSD, a personal baseline (60 days), a normal range of mean ± 0.5 SD and a 7-day rolling average
-all **match** the method. The departure is that the **single-day value drives the verdict**: MODERATE when today's
-HRV z < −0.5. If day-to-day noise is roughly normal, about 31 % of perfectly ordinary mornings fall below −0.5 SD.
-The resting-HR rule (z > +1) adds about 16 % more. So the app **over-claims** the meaning of an individual day. In
+all **match** the method. *Applied 2026-10-09:* a single day now triggers MODERATE only at HRV z ≤ −1 (Kiviniemi's
+rule); the ±0.5 SD range still applies to the 7-day average. Before that change MODERATE fired at z < −0.5, which with
+roughly normal day-to-day noise is about 31 % of perfectly ordinary mornings.
+The resting-HR rule (z > +1) adds about 16 % more. In
 Plews, Vesterinen and Javaloyes the SWC is applied to the 7-day rolling average (see L). The ±0.5 SD-of-daily-values
 version is the HRV4Training/Altini implementation of the same idea. Scaled to SD rather than CV, it is close to
 Plews' version.
@@ -83,7 +84,8 @@ supine parasympathetic indices the week before, followed by a shift toward sympa
 
 **App today:** The pattern (HR up with HRV down, relative to the personal baseline) **matches** the evidence. The
 thresholds (HR ≥ +4 bpm, and either ≥ +1.5 SD with HRV ≤ −1 SD or ≥ +2.5 SD alone; streak of flagged days counted)
-are **not taken from any study**.
+are **not taken from any study**. *Applied 2026-10-09:* the warning now needs two consecutive flagged mornings; a
+single flagged morning gets a softer note naming alcohol, sleep, travel and stress as look-alikes.
 They are a reasonable heuristic. The +4 bpm floor is a little above the average sickness effect in Altini & Plews
 (+6 % ≈ +3–3.5 bpm at a resting HR of 55–60). The phrase "classic pattern a day or two before an infection"
 **slightly over-claims**:
@@ -116,8 +118,8 @@ Flatt & Esco 2016 support a short stabilisation of about 1 minute before recordi
 
 **App today:** 120 s lnRMSSD **matches** the evidence well. HF from 120 s is at the edge of what is acceptable. LF
 and LF/HF from 120 s **over-claim**, and `spectral_metrics` accepts spans as short as 60 s, which is too short for
-LF by every source above. The 15 s settle is shorter than the roughly 1 minute the studies used. That is minor for
-RMSSD.
+LF by every source above. *Applied 2026-10-09:* the settle period is now 60 s, about what the studies used (it was
+15 s).
 
 ## E. Lomb-Scargle spectra from the beat series
 
@@ -314,8 +316,8 @@ and blood pressure (Fagius 1989). That argues for voiding first, or at least doi
 
 **App today:** On waking, supine, before coffee and fixed duration all **match**. The Elonga band is an optical
 (PPG) armband, so the app measures pulse-rate variability, not HRV. That is acceptable at rest, but RMSSD may read
-slightly high, and motion artefacts matter more (see F). The protocol text says nothing about the bladder or about
-keeping the posture identical.
+slightly high, and motion artefacts matter more (see F). *Applied 2026-10-09:* the Method page now mentions the
+bladder, pulse-rate variability and the 60 s settle period.
 
 ## L. HRV-guided training outcomes
 
@@ -342,7 +344,8 @@ fitness and performance.
 
 **App today:** The ready / moderate / rest advice **matches the spirit** of these protocols. It **over-claims
 relative to them in one respect**: the trials acted on the 7-day rolling average, or on single-day drops of at
-least 1 SD (Kiviniemi), not on −0.5 SD for a single day. The likely benefit should be described as "fewer
+least 1 SD (Kiviniemi), not on −0.5 SD for a single day. *Applied 2026-10-09:* the single-day trigger is now −1 SD,
+matching Kiviniemi. The likely benefit should be described as "fewer
 unnecessary hard sessions, similar or slightly better gains", not as better performance.
 
 ---
@@ -356,7 +359,7 @@ Ranked by strength of evidence, strongest first.
    - MODERATE should require either the 7-day average below range, or today's HRV at or below −1 SD (Kiviniemi's
      single-day rule). Change `moderate`'s HRV trigger from −0.5 to −1.0 SD.
    - Keep −0.5 SD only for the 7-day average.
-   - This removes the roughly 1-in-3 false MODERATE days.
+   - This removes the roughly 1-in-3 false MODERATE days. **Applied 2026-10-09.**
 2. **Stop reporting LF, LF/HF and breathing rate as if they were valid from 1–2 minutes**
    (Task Force via Shaffer & Ginsberg, Bourdillon 2017, Saboul 2013/2014, Brown 1993; strong).
    - Raise `spectral_metrics`' `min_span_s` to at least 120 s for HF.
@@ -384,7 +387,7 @@ Ranked by strength of evidence, strongest first.
    - Use something like: "HR up and HRV down together: often seen 1–3 days before a cold or infection, but alcohol,
      poor sleep, travel and stress cause the same pattern."
    - Consider requiring 2 consecutive flagged mornings before raising it from a note to a warning, as the published
-     detectors use multi-day logic.
+     detectors use multi-day logic. **Applied 2026-10-09** (wording and the two-morning rule).
    - The specific SD and bpm thresholds have no published source. Label them as heuristics and tune them in
      `hrmon analyze` against `sick` tags.
 8. **Require at least 3 of 7 mornings for the 7-day average to count, and at least 14 baseline days before giving
@@ -392,7 +395,7 @@ Ranked by strength of evidence, strongest first.
    moderate). The current minimum is 7 days.
 9. **Protocol text** (Fagius 1989, Flatt & Esco 2016, Schäfer & Vagedes 2013; weak to moderate).
    - Add "empty your bladder first, or always do the same".
-   - Lengthen the settle period from 15 s to about 60 s.
+   - Lengthen the settle period from 15 s to about 60 s. **Applied 2026-10-09** (all three points of this item).
    - Mention that the band measures pulse-rate variability, which agrees with ECG at rest but is sensitive to
      arm movement.
 10. **Present the 0.65/0.35 score weights and the 75 ± 15 scaling as a design choice**, not part of the published

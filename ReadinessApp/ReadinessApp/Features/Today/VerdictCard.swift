@@ -86,6 +86,10 @@ struct RangeBar: View {
     let mean: Double
     let sd: Double
     let higherIsBetter: Bool
+    /// SDs on the bad side from which the marker turns caution. Today's HRV passes 1 (`-Readiness.moderateZHRV`): a
+    /// single morning only counts as MODERATE from −1 SD, so between −0.5 and −1 SD it stays green like the verdict.
+    /// nil keeps the edge of the range (resting HR, 7-day average).
+    var cautionFrom: Double? = nil
     var span: Double = 2.5   // SDs shown on each side
 
     var body: some View {
@@ -116,6 +120,12 @@ struct RangeBar: View {
     private var markerColor: Color {
         let z = (value - mean) / sd
         let bad = higherIsBetter ? -z : z
+        if let cautionFrom {
+            // the verdict's own limits: MODERATE at z ≤ −cautionFrom, REST at z ≤ −1.5
+            if bad < cautionFrom { return Palette.good }
+            if bad < 1.5 { return Palette.caution }
+            return Palette.alert
+        }
         if bad <= 0.5 { return Palette.good }
         if bad <= 1.5 { return Palette.caution }
         return Palette.alert

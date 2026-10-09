@@ -17,7 +17,7 @@ enough for personal use; 7-day re-sign, or a paid account for TestFlight).
 
 ## Product scope (v1)
 
-1. **Measure** – guided morning protocol identical to `hrmon measure`: connect, 15 s settle, 120 s
+1. **Measure** – guided morning protocol identical to `hrmon measure`: connect, 60 s settle, 120 s
    measurement (extended by up to 60 s while fewer than 80 clean beats are in), live HR and RR while it runs,
    result card at the end.
 2. **Today** – verdict (READY / MODERATE / REST, score, illness flag), *why* in plain language, today's
@@ -98,7 +98,7 @@ Key decisions:
 ## Measurement flow (state machine in `MeasureFlow`)
 
 ```
-intro ──start──▶ connecting ──first sample──▶ settling(15 s) ──▶ measuring(120 s, +≤60 s) ──▶ result
+intro ──start──▶ connecting ──first sample──▶ settling(60 s) ──▶ measuring(120 s, +≤60 s) ──▶ result
    ▲                 │ timeout / not found                            │ disconnect
    └─────────────────┴──────── help sheet ◀────────────────────── reconnecting (clock paused)
 ```

@@ -537,7 +537,8 @@ def main(argv: Optional[list[str]] = None) -> None:
                    help=f"nominal measurement seconds (default {protocol.DURATION_S:.0f}); extended by up to "
                         f"{protocol.MAX_EXTENSION_S:.0f} s while fewer than {protocol.MIN_CLEAN_BEATS} clean beats are in")
     e.add_argument("--settle", type=float, default=protocol.SETTLE_S,
-                   help=f"seconds discarded at the start (default {protocol.SETTLE_S:.0f})")
+                   help=f"seconds discarded at the start so the heart rate settles after lying down "
+                        f"(default {protocol.SETTLE_S:.0f}; keep it the same every day)")
     e.add_argument("--out", help="CSV path (default sessions/<timestamp>.csv)")
     e.add_argument("--window", type=float, default=60.0, help="rolling window for live RMSSD, seconds")
     e.add_argument("--feeling", type=int, choices=range(1, 6), metavar="1-5",

@@ -5,9 +5,13 @@ import Foundation
 /// Baseline = mean/SD of lnRMSSD and resting HR over the previous `baselineDays` (excluding today; low-quality
 /// mornings left out once at least `minBaselineDays` clean ones exist), normal range = mean ± 0.5 SD,
 /// 7-day rolling lnRMSSD average (flags fatigue only with at least `weekMinDays` mornings, Plews 2014),
-/// z-scores drive the verdict.
-/// A raised resting HR with suppressed HRV raises the illness warning; it often precedes an infection, but alcohol,
-/// poor sleep, travel and stress produce it too. Training heuristic, not medical advice.
+/// z-scores drive the verdict. A single morning's HRV only counts from −1 SD (`moderateZHRV`), not from the edge of the
+/// ±0.5 SD range: the HRV-guided training trials acted on the 7-day average or on single-day drops of at least 1 SD
+/// (Kiviniemi 2007; Plews 2012/2013; docs/evidence.md, sections A and L).
+/// A raised resting HR with suppressed HRV often precedes an infection, but alcohol, poor sleep, travel and stress
+/// produce it too. One flagged morning (`illnessSignal`) only adds a note; the illness warning needs `illnessMinDays`
+/// flagged mornings in a row, as the published detectors use multi-day logic (Mishra 2020, Alavi 2022; evidence.md C).
+/// Training heuristic, not medical advice.
 /// Regeneration and Stress (0–10, 5 = your normal, 4–6 = ±0.5 SD, 2 points = 1 SD) are scored against the verdict's
 /// personal, clean-only baseline. Regeneration = z(lnRMSSD), your HRV against your own normal. Stress is strain /
 /// load: ⅔ · z(resting HR) + ⅓ · −z(ln SD2), Naranjo Orellana's (2015) Stress Score 1000/SD2 on the log scale, or
@@ -74,7 +78,11 @@ public struct Assessment: Equatable, Sendable {
     public var hrSD: Double?
     public var zHRV: Double?
     public var zHR: Double?
+    /// The illness warning: `illnessStreak` ≥ `Readiness.illnessMinDays`.
     public var illness = false
+    /// Today's morning alone matches the illness pattern.
+    public var illnessSignal = false
+    /// Flagged mornings in a row up to today (0 when today is not flagged).
     public var illnessStreak = 0
     public var lowConfidence = false
     public var notes: [String] = []
@@ -110,6 +118,10 @@ public enum Readiness {
     public static let lnSDFloor = 0.05
     public static let hrSDFloor = 1.5
     public static let illnessBpm = 4.0
+    /// Flagged mornings in a row before the illness warning; a single one only adds a note (Mishra 2020, Alavi 2022).
+    public static let illnessMinDays = 2
+    /// MODERATE when today's HRV z is at or below this (Kiviniemi 2007); the 7-day average keeps the ±0.5 SD range.
+    public static let moderateZHRV = -1.0
     /// The 7-day average needs this many mornings in its window before it can flag fatigue (Plews 2014).
     public static let weekMinDays = 3
     // Regeneration / Stress, same defaults as `Params` in hrmon/readiness.py.
@@ -262,8 +274,9 @@ public enum Readiness {
         let composite = 0.65 * zHRV - 0.35 * zHR
         a.score = Int(max(0, min(100, (75 + 15 * composite).rounded())))
 
-        a.illness = illnessRule(hrGap: today.meanHR - hrMean, zHRV: zHRV, zHR: zHR)
-        if a.illness {
+        // one morning is a signal, the warning needs `illnessMinDays` of them in a row
+        a.illnessSignal = illnessRule(hrGap: today.meanHR - hrMean, zHRV: zHRV, zHR: zHR)
+        if a.illnessSignal {
             // consecutive calendar days with the flag, walking back from today
             var j = idx
             while j > 0, daysBetween(records[j - 1].when, records[j].when) == 1,
@@ -272,25 +285,29 @@ public enum Readiness {
             }
             a.illnessStreak = idx - j + 1
         }
+        a.illness = a.illnessSignal && a.illnessStreak >= illnessMinDays
 
         let weekLow = week.count >= weekMinDays && (a.lnWeek.map { $0 < lnMean - 0.5 * lnSD } ?? false)
 
         if a.illness || zHRV <= -1.5 || zHR >= 1.5 || (zHRV <= -1.0 && zHR >= 1.0) {
             a.status = .rest
-        } else if zHRV < -0.5 || zHR > 1.0 || weekLow {
+        } else if zHRV <= moderateZHRV || zHR > 1.0 || weekLow {
             a.status = .moderate
         } else {
             a.status = .ready
         }
 
+        let gap = f0(today.meanHR - hrMean)
         if a.illness {
-            let gap = f0(today.meanHR - hrMean)
             let days = a.illnessStreak > 1 ? " for \(a.illnessStreak) days in a row" : ""
             if zHRV <= -1.0 {
                 a.notes.append("Resting HR is \(gap) bpm above your normal and HRV is below your normal\(days). This pattern often appears one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. Take it easy, drink enough, and watch for symptoms.")
             } else {
                 a.notes.append("Resting HR is \(gap) bpm above your normal\(days), far outside your usual range. Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this. Take it easy and watch for symptoms.")
             }
+        } else if a.illnessSignal {
+            let hrv = zHRV <= -1.0 ? " and HRV is below your normal" : ""
+            a.notes.append("Resting HR is \(gap) bpm above your normal\(hrv). One morning like this can be alcohol, poor sleep, travel or stress; if it is the same tomorrow the app raises the illness warning.")
         }
         if weekLow {
             a.notes.append("Your 7-day HRV average is below your normal range. Fatigue has been building up over several days, so plan an easier week.")

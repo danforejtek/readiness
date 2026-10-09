@@ -63,16 +63,20 @@ final class InsightsTests: XCTestCase {
     }
 
     func testIllnessCheckSortsCaughtMissedAndUnexplained() throws {
-        // Day 15: HR far up, tagged sick → caught. Day 22: tagged sick, nothing measured → missed.
-        // Day 27: HR far up, no tag → unexplained warning.
+        // Days 15–16: HR far up, tagged sick on 15 → the warning on 16 catches it. Day 22: tagged sick, nothing
+        // measured → missed. Days 27–28: HR far up, no tag → one unexplained warning (on 28).
         let days = history(30, tweak: { i in
             switch i {
             case 15: return (3.8, 60, 1, ["sick"])
+            case 16: return (3.8, 60, 2, [])
             case 22: return (4.0, 52, 2, ["sick"])
-            case 27: return (3.8, 60, 3, [])
+            case 27, 28: return (3.8, 60, 3, [])
             default: return nil
             }
         })
+        // the warning needs two flagged mornings in a row: the first of each pair is only a signal
+        XCTAssertEqual(days.filter(\.assessment.illness).count, 2)
+        XCTAssertEqual(days.filter(\.assessment.illnessSignal).count, 4)
         let ill = try XCTUnwrap(Insights.report(days).illness)
         XCTAssertEqual(ill.caught.count, 1)
         XCTAssertEqual(ill.missed.count, 1)

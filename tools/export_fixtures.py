@@ -170,20 +170,22 @@ recs = make_history()
 recs = add_day(recs, 4.02, 52.5)            # ready
 recs = add_day(recs, 4.0, 55.9)             # resting HR z ≥ 2.5 but < 4 bpm up: rest, not illness
 recs = add_day(recs, 3.85, 53.0)            # low HRV
-recs = add_day(recs, 3.80, 60.0)            # illness day 1
-recs = add_day(recs, 3.78, 61.0)            # illness day 2 (streak)
+recs = add_day(recs, 3.80, 60.0)            # illness signal, day 1: a note, not yet the warning
+recs = add_day(recs, 3.78, 61.0)            # illness warning, day 2 (streak)
 recs = add_day(recs, 4.0, 52.0, beats=40, artefacts=25.0, with_beats=False)   # low quality, imported row without beats
 recs = add_day(recs, 4.3, 46.0)             # saturation note
-recs = add_day(recs, 4.02, 61.0)            # resting HR far up, HRV normal: illness by HR alone
+recs = add_day(recs, 4.02, 61.0)            # resting HR far up, HRV normal: illness signal by HR alone, one day
 for _ in range(6):
     recs = add_day(recs, 3.93, 52.0)        # weekly average drifting below range
-recs = add_day(recs, 3.80, 61.0)            # illness, streak 1
-recs = add_day(recs, 3.78, 61.5, gap_days=2)   # illness again, but a day was skipped: streak 1
-recs = add_day(recs, 3.80, 61.0)            # streak 2
+recs = add_day(recs, 3.80, 61.0)            # illness signal, streak 1
+recs = add_day(recs, 3.78, 61.5, gap_days=2)   # signal again, but a day was skipped: streak 1, still no warning
+recs = add_day(recs, 3.80, 61.0)            # streak 2: warning
 recs = add_day(recs, 3.79, 61.5)            # streak 3
 recs = add_day(recs, 3.70, 52.0, gap_days=8)   # after a week off: a low morning alone in its 7-day window
 recs = add_day(recs, 3.98, 52.0)            # 2 mornings in the window, average below range: too few to flag fatigue
 recs = add_day(recs, 3.98, 52.0)            # the third morning makes the 7-day average count
+recs = add_day(recs, 4.02, 64.0)            # resting HR far up, HRV normal: illness signal by HR alone …
+recs = add_day(recs, 4.02, 64.0)            # … two mornings in a row: the warning by HR alone
 recs = add_day(recs, 4.0, 52.0, gap_days=70)   # after a long gap the baseline shrinks below 7 days
 
 def rec_json(r: DayRecord):
@@ -198,7 +200,7 @@ def change_json(c):
 def assess_json(a):
     return {"status": a.status, "score": a.score, "baseline_n": a.baseline_n, "ln_mean": a.ln_mean, "ln_sd": a.ln_sd,
             "ln_week": a.ln_week, "week_n": a.week_n, "hr_mean": a.hr_mean, "hr_sd": a.hr_sd, "z_hrv": a.z_hrv, "z_hr": a.z_hr,
-            "illness": a.illness, "illness_streak": a.illness_streak, "low_confidence": a.low_confidence,
+            "illness": a.illness, "illness_signal": a.illness_signal, "illness_streak": a.illness_streak, "low_confidence": a.low_confidence,
             "notes": a.notes, "regeneration": a.regeneration, "stress": a.stress, "z_regeneration": a.z_regeneration,
             "z_stress": a.z_stress, "ln_change": change_json(a.ln_change), "hr_change": change_json(a.hr_change),
             "regeneration_change": change_json(a.regeneration_change), "stress_change": change_json(a.stress_change)}

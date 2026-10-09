@@ -48,7 +48,7 @@ declares Bluetooth usage talk to CoreBluetooth; a Python launched from some othe
 .venv/bin/hrmon dump                 # GATT table + 20 s of raw notifications (diagnostics)
 .venv/bin/hrmon monitor              # live HR, RR, RMSSD/SDNN panel; logs sessions/<timestamp>.csv
 .venv/bin/hrmon monitor --duration 600
-.venv/bin/hrmon measure              # morning protocol: 15 s settle + 120 s (+ up to 60 s), verdict, appends sessions/readiness.csv
+.venv/bin/hrmon measure              # morning protocol: 60 s settle + 120 s (+ up to 60 s), verdict, appends sessions/readiness.csv
 .venv/bin/hrmon readiness            # today's readiness / illness verdict and 14-day trend
 ```
 
@@ -76,8 +76,8 @@ Elonga's score comes from a short resting HRV reading every morning compared wit
    Empty your bladder first, or always do the same (a full bladder raises blood pressure; Fagius 1989). The
    optical band measures pulse-rate variability, which agrees with ECG at rest but is more sensitive to arm
    movement (Schäfer & Vagedes 2013), so keep the arm still.
-2. `hrmon measure` waits for the first heartbeat, discards 15 s to settle, then measures **120 s**
-   (Elonga's duration). Use `--duration`/`--settle` to change it; keep it identical every day. When too many
+2. `hrmon measure` waits for the first heartbeat, discards 60 s to settle (about the minute the studies used;
+   Flatt & Esco 2016, [`docs/evidence.md`](docs/evidence.md) K), then measures **120 s** (Elonga's duration). Use `--duration`/`--settle` to change it; keep it identical every day. When too many
    beats are rejected and fewer than 80 clean beats are in after the 120 s, it keeps measuring until 80 are in
    or for at most 60 s more; the panel then shows "extending · N more clean beats". Both limits live in
    `hrmon/protocol.py` (the iOS app mirrors them in `AppSettings`); the stored `duration_s` is the real
@@ -100,15 +100,25 @@ Elonga's score comes from a short resting HRV reading every morning compared wit
   it can only flag fatigue once at least 3 mornings fall in the 7 days (`week_min_days`): Plews et al. 2014 found
   3 randomly spread mornings a week enough to reproduce the weekly picture.
 - Today's deviation in SD units drives the verdict:
-  **READY** inside the normal range · **MODERATE** HRV below −0.5 SD or HR above +1 SD or weekly average
-  below range · **REST** HRV below −1.5 SD, HR above +1.5 SD, or both clearly off.
+  **READY** inside the normal range, or HRV only slightly below it · **MODERATE** HRV at or below −1 SD, or HR
+  above +1 SD, or weekly average below range · **REST** HRV at or below −1.5 SD, HR at or above +1.5 SD, both
+  clearly off (HRV ≤ −1 SD with HR ≥ +1 SD), or the illness warning.
+  A single morning's HRV only counts from −1 SD (`moderate_z_hrv`), not from the edge of the ±0.5 SD range: about
+  one ordinary morning in three falls below that edge, and the HRV-guided training trials acted on the 7-day
+  average or on single-day drops of at least 1 SD (Kiviniemi 2007; Plews 2012/2013; evidence.md A and L). The 7-day
+  average keeps the ±0.5 SD range. The why-rows and charts still show the ±0.5 SD range; today's HRV between −0.5
+  and −1 SD reads "within the day-to-day noise" and its marker stays green.
 - Score 0–100 = 75 + 15 × (0.65·z_HRV − 0.35·z_HR), so 75 is your normal morning. The 0.65/0.35 weights and the
   75 ± 15 scaling are this app's design choice, not part of a published method.
-- **Illness warning**: resting HR at least +4 bpm above normal and either at least +1.5 SD while HRV is at
-  least 1 SD below, or above +2.5 SD on its own. Resting HR up with HRV down often appears one to three days
-  before a cold or other infection, but alcohol, poor sleep, travel and stress produce the same pattern
-  (Mishra 2020, Alavi 2022, Altini & Plews 2021); flagged days in a row are counted (a day without a measurement
-  ends the streak). The thresholds are heuristics, not taken from a study, for training decisions, not a diagnosis.
+- **Illness warning**: a morning is flagged when resting HR is at least +4 bpm above normal and either at least
+  +1.5 SD while HRV is at least 1 SD below, or at least +2.5 SD on its own. The warning ("Possible illness", a REST
+  day) needs **2 flagged mornings in a row** (`illness_min_days`); flagged days in a row are counted, and a day
+  without a measurement ends the streak. A single flagged morning (`illness_signal`) only adds a note that one
+  morning like this can be alcohol, poor sleep, travel or stress, and the verdict follows the usual rules. Resting
+  HR up with HRV down often appears one to three days before a cold or other infection, but alcohol, poor sleep,
+  travel and stress produce the same pattern, and the published detectors use multi-day logic (Mishra 2020,
+  Alavi 2022, Altini & Plews 2021; evidence.md C). The thresholds are heuristics, not taken from a study, for
+  training decisions, not a diagnosis.
 - Measurements with > 15 % artefacts or < 60 beats are marked low confidence. They still get a verdict, but
   once the 60-day window holds at least 7 clean mornings, low-confidence mornings are left out of the baseline
   (mean, SD, number of mornings) and of the 7-day average of later days; until then every morning counts.
@@ -141,7 +151,7 @@ what makes any of these scores work.
 cd ReadinessApp && xcodegen generate && open ReadinessApp.xcodeproj
 ```
 
-Screens: Today (week strip, Regeneration / Readiness / Stress rings with % vs average and since last, verdict, why-rows against your normal range, numbers), Measure (15 s settle + 120 s, extended by up to
+Screens: Today (week strip, Regeneration / Readiness / Stress rings with % vs average and since last, verdict, why-rows against your normal range, numbers), Measure (60 s settle + 120 s, extended by up to
 60 s when too many beats are rejected, live HR and RR tachogram), Trends over 2 weeks to 1 year (lnRMSSD with normal band and 7-day average, resting HR, Regeneration, Stress, score, breathing),
 History and per-morning detail (tachogram, Poincaré, spectrum), Settings (protocol, data source, CSV
 import/export compatible with `sessions/readiness.csv`, demo data). On an iPhone it connects to the band over
