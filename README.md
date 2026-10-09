@@ -48,7 +48,7 @@ declares Bluetooth usage talk to CoreBluetooth; a Python launched from some othe
 .venv/bin/hrmon dump                 # GATT table + 20 s of raw notifications (diagnostics)
 .venv/bin/hrmon monitor              # live HR, RR, RMSSD/SDNN panel; logs sessions/<timestamp>.csv
 .venv/bin/hrmon monitor --duration 600
-.venv/bin/hrmon measure              # morning protocol: 15 s settle + 120 s, verdict, appends sessions/readiness.csv
+.venv/bin/hrmon measure              # morning protocol: 15 s settle + 120 s (+ up to 60 s), verdict, appends sessions/readiness.csv
 .venv/bin/hrmon readiness            # today's readiness / illness verdict and 14-day trend
 ```
 
@@ -73,11 +73,22 @@ Elonga's score comes from a short resting HRV reading every morning compared wit
 `hrmon measure` reproduces that protocol and adds the verdict:
 
 1. Right after waking, before coffee, phone or getting up: lie on your back, band snug on the inner forearm.
+   Empty your bladder first, or always do the same (a full bladder raises blood pressure; Fagius 1989). The
+   optical band measures pulse-rate variability, which agrees with ECG at rest but is more sensitive to arm
+   movement (Schäfer & Vagedes 2013), so keep the arm still.
 2. `hrmon measure` waits for the first heartbeat, discards 15 s to settle, then measures **120 s**
-   (Elonga's duration). Use `--duration`/`--settle` to change it; keep it identical every day.
+   (Elonga's duration). Use `--duration`/`--settle` to change it; keep it identical every day. When too many
+   beats are rejected and fewer than 80 clean beats are in after the 120 s, it keeps measuring until 80 are in
+   or for at most 60 s more; the panel then shows "extending · N more clean beats". Both limits live in
+   `hrmon/protocol.py` (the iOS app mirrors them in `AppSettings`); the stored `duration_s` is the real
+   measured span.
 3. It prints time-domain HRV (RMSSD, lnRMSSD, SDNN, pNN50), frequency-domain HRV from a Lomb-Scargle
-   spectrum of the beat series (LF and HF power, LF/HF, breathing rate from the HF peak), appends a row to
+   spectrum of the beat series (LF and HF power, LF/HF, breathing rate from the spectral peak at 6–30
+   breaths/min, but never above half the heart rate, the mean Nyquist frequency of a once-per-beat series
+   (Laguna 1998); empty when there is no clear peak), appends a row to
    `sessions/readiness.csv`, and shows the readiness panel. `hrmon readiness` shows it again any time.
+   Rejected beats are dropped, and the successive difference across a dropped beat is skipped by RMSSD, pNN50
+   and SD1, so artefacts do not inflate them (Lipponen & Tarvainen 2019); SDNN and mean HR use every clean beat.
 
 **How the verdict is computed** (`hrmon/readiness.py`), following the method used in sports science
 (Plews & Buchheit) and apps such as HRV4Training:
@@ -85,21 +96,38 @@ Elonga's score comes from a short resting HRV reading every morning compared wit
 - Baseline = mean and SD of **lnRMSSD** and **resting HR** over the previous 60 days (needs at least 7
   mornings; until then it reports "building baseline").
 - Normal range = mean ± 0.5 SD. The 7-day rolling lnRMSSD average is compared against it as well, because a
-  slow drift below the range means accumulated fatigue even when single days look fine.
+  slow drift below the range means accumulated fatigue even when single days look fine. It is always shown, but
+  it can only flag fatigue once at least 3 mornings fall in the 7 days (`week_min_days`): Plews et al. 2014 found
+  3 randomly spread mornings a week enough to reproduce the weekly picture.
 - Today's deviation in SD units drives the verdict:
   **READY** inside the normal range · **MODERATE** HRV below −0.5 SD or HR above +1 SD or weekly average
   below range · **REST** HRV below −1.5 SD, HR above +1.5 SD, or both clearly off.
-- Score 0–100 = 75 + 15 × (0.65·z_HRV − 0.35·z_HR), so 75 is your normal morning.
-- **Illness warning**: resting HR at least +1.5 SD *and* +4 bpm above normal while HRV is at least 1 SD
-  below, or HR above +2.5 SD on its own. This is the classic pattern a day or two before an infection shows
-  symptoms; consecutive flagged days are counted. It is a heuristic for training decisions, not a diagnosis.
-- Measurements with > 15 % artefacts or < 60 beats are marked low confidence.
-- **Regeneration and Stress (0–10, 5 = your normal)**: Kubios-style PNS / SNS indices, but each part is compared
-  with your own 60-day baseline instead of population norms. Regeneration averages the z-scores of mean RR, RMSSD
-  and Poincaré SD1; Stress averages those of resting HR, √(Baevsky's stress index) and SD2 (reversed: less slow
-  variation counts as more stress). Value = 5 + 2·z, clipped to 0–10, so 4–6 is your normal range. Mornings
-  without beats use the parts they have. They also come with "% vs average" and "% since last" comparisons. They
-  do not change the verdict.
+- Score 0–100 = 75 + 15 × (0.65·z_HRV − 0.35·z_HR), so 75 is your normal morning. The 0.65/0.35 weights and the
+  75 ± 15 scaling are this app's design choice, not part of a published method.
+- **Illness warning**: resting HR at least +4 bpm above normal and either at least +1.5 SD while HRV is at
+  least 1 SD below, or above +2.5 SD on its own. Resting HR up with HRV down often appears one to three days
+  before a cold or other infection, but alcohol, poor sleep, travel and stress produce the same pattern
+  (Mishra 2020, Alavi 2022, Altini & Plews 2021); flagged days in a row are counted (a day without a measurement
+  ends the streak). The thresholds are heuristics, not taken from a study, for training decisions, not a diagnosis.
+- Measurements with > 15 % artefacts or < 60 beats are marked low confidence. They still get a verdict, but
+  once the 60-day window holds at least 7 clean mornings, low-confidence mornings are left out of the baseline
+  (mean, SD, number of mornings) and of the 7-day average of later days; until then every morning counts.
+- **Regeneration and Stress (0–10, 5 = your normal)**, both against the same 60-day, clean-only baseline as the
+  verdict. **Regeneration** is your HRV, z(lnRMSSD), against your own normal. Nothing else is averaged in: SD1 is
+  RMSSD/√2 and mean RR is the reciprocal of HR, so they would only count the same information twice (Brennan
+  2001, Ciccone 2017). **Stress** is strain / load on your system: ⅔ · z(resting HR) + ⅓ · −z(ln SD2), mostly
+  resting HR plus a smaller part from the long-term variability SD2. The SD2 part is Naranjo Orellana et al.'s
+  (2015) Stress Score 1000/SD2 on the log scale; mornings without SD2 (imported rows) use resting HR alone. Stress
+  is not a measure of sympathetic activity: no index from a short resting recording validly measures that
+  (Billman 2013, Martelli 2014). Baevsky's stress index is still stored and shown, but not used: it mostly repeats
+  HR and SD2. Value = 5 + 2·z, clipped to 0–10: 5 = your normal, 4–6 = ±0.5 SD, 2 points = 1 SD. They also come
+  with "% vs average" and "% since last" comparisons (as do HRV, where the % is of RMSSD itself, e^Δln − 1, and
+  resting HR). They do not change the verdict.
+
+**Sources.** Every rule above, and where it departs from the literature, is checked against published studies in
+[`docs/evidence.md`](docs/evidence.md): the lnRMSSD baseline and 7-day average (sections A, B), the illness
+pattern (C), recording length and spectral limits (D, E, J), artefact handling (F), and the Regeneration/Stress
+composition (G, H, I).
 
 What Elonga calls "spectral analysis" maps onto the LF/HF numbers here, but their exact scoring is
 proprietary; the model above is the published, open approach and is tuned to your own history, which is
@@ -113,8 +141,8 @@ what makes any of these scores work.
 cd ReadinessApp && xcodegen generate && open ReadinessApp.xcodeproj
 ```
 
-Screens: Today (week strip, Regeneration / Readiness / Stress rings with % vs average and since last, verdict, why-rows against your normal range, numbers), Measure (15 s settle + 120 s, live HR
-and RR tachogram), Trends over 2 weeks to 1 year (lnRMSSD with normal band and 7-day average, resting HR, Regeneration, Stress, score, breathing),
+Screens: Today (week strip, Regeneration / Readiness / Stress rings with % vs average and since last, verdict, why-rows against your normal range, numbers), Measure (15 s settle + 120 s, extended by up to
+60 s when too many beats are rejected, live HR and RR tachogram), Trends over 2 weeks to 1 year (lnRMSSD with normal band and 7-day average, resting HR, Regeneration, Stress, score, breathing),
 History and per-morning detail (tachogram, Poincaré, spectrum), Settings (protocol, data source, CSV
 import/export compatible with `sessions/readiness.csv`, demo data). On an iPhone it connects to the band over
 CoreBluetooth (`Bluetooth/BLEHeartRateSource.swift`): press the band's button so it blinks blue, tap *Measure now*,

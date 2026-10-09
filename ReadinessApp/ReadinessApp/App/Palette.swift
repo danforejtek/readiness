@@ -20,11 +20,11 @@ enum Palette {
 
     // Identity colours of the three daily numbers: what each one measures, not whether it is good.
     // Good/bad stays with the level label (good / caution / alert) under each ring.
-    /// Regeneration, the rest-and-recover (parasympathetic) side: night blue.
+    /// Regeneration, your HRV against your normal (rest and recover): night blue.
     static let regeneration = Color(light: 0x3F63C0, dark: 0x8AA8F0)
     /// Readiness, energy for the day: fresh spring green.
     static let readiness = Color(light: 0x4F8A1F, dark: 0xA8D672)
-    /// Stress, fight-or-flight (sympathetic) arousal: warm rose, kept apart from the coral alert.
+    /// Stress, strain / load (mostly resting HR): warm rose, kept apart from the coral alert.
     static let stress = Color(light: 0xB54A82, dark: 0xE88AB8)
 
     /// Text on an accent-filled button: white on the deep light-mode teal, near-black on the pale dark-mode one.

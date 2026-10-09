@@ -22,15 +22,35 @@ final class ParserTests: XCTestCase {
 }
 
 final class TimeDomainTests: XCTestCase {
-    struct Case: Decodable { let rr: [Double]; let metrics: PyMetrics?; let poincare: [Double]?; let stress_index: Double? }
+    struct Case: Decodable { let rr: [Double]; let breaks: [Int]; let metrics: PyMetrics?; let poincare: [Double]?
+                             let stress_index: Double? }
 
     func testMatchesPython() throws {
-        for c in try Fixtures.load("time_domain", as: [Case].self) {
-            let m = computeMetrics(rr: c.rr, durationS: c.rr.dropFirst().reduce(0, +) / 1000, artefacts: 2)
+        let cases = try Fixtures.load("time_domain", as: [Case].self)
+        for c in cases {
+            let m = computeMetrics(rr: c.rr, durationS: c.rr.dropFirst().reduce(0, +) / 1000, artefacts: 2, breaks: c.breaks)
             assertMetrics(m, c.metrics)
-            assertPoincare(poincare(rr: c.rr), c.poincare)
+            assertPoincare(poincare(rr: c.rr, breaks: c.breaks), c.poincare)
             assertOptional(stressIndex(rr: c.rr), c.stress_index, "stress index of \(c.rr.count) beats")
         }
+        XCTAssertTrue(cases.contains { !$0.breaks.isEmpty }, "the fixture must exercise skipped differences")
+    }
+
+    func testDifferencesAcrossARejectedBeatAreSkipped() throws {
+        // 1500 ms is rejected; the difference 1005 − 1010 spans it and must not enter RMSSD, pNN50 or SD1
+        let b = RRBuffer()
+        var t = 0.0
+        for v in [1000.0, 1020, 990, 1010, 1500, 1005, 940, 1015, 995, 1060, 1000] { t += v / 1000; b.add(v, at: t) }
+        let clean: [Double] = [1000, 1020, 990, 1010, 1005, 940, 1015, 995, 1060, 1000]
+        XCTAssertEqual(b.values, clean)
+        XCTAssertEqual(b.breaks, [4])
+        let diffs: [Double] = [20, -30, 20, -65, 75, -20, 65, -60]
+        let m = try XCTUnwrap(b.metrics())
+        XCTAssertClose(m.rmssd, (diffs.map { $0 * $0 }.reduce(0, +) / 8).squareRoot())
+        XCTAssertClose(m.pnn50, 50)
+        XCTAssertClose(m.sdnn, Stats.stdev(clean))
+        let pc = try XCTUnwrap(poincare(rr: b.values, breaks: b.breaks))
+        XCTAssertClose(pc.sd1 * pc.sd1, Stats.variance(diffs) / 2)
     }
 
     func testStressIndexByHand() throws {
@@ -44,9 +64,12 @@ final class TimeDomainTests: XCTestCase {
 
 final class RRBufferTests: XCTestCase {
     struct Seq: Decodable { let inputs: [[Double]]; let values: [Double]; let times: [Double]; let beat_times: [Double]
-                            let artefacts: Int; let total: Int; let window_2_5: [Double] }
+                            let artefacts: Int; let total: Int; let window_2_5: [Double]; let breaks: [Int]
+                            let metrics: PyMetrics; let metrics_4: PyMetrics }
     struct Packets: Decodable { let inputs: [[Double]]; let values: [Double]; let beat_times: [Double] }
-    struct Fixture: Decodable { let sequential: Seq; let packets: Packets }
+    struct Step: Decodable { let inputs: [[Double]]; let values: [Double]; let artefacts: Int; let total: Int
+                             let breaks: [Int]; let metrics: PyMetrics }
+    struct Fixture: Decodable { let sequential: Seq; let packets: Packets; let step: Step }
 
     func testSequentialFilterAndWindow() throws {
         let fx = try Fixtures.load("rr_buffer", as: Fixture.self).sequential
@@ -59,6 +82,27 @@ final class RRBufferTests: XCTestCase {
         for (a, c) in zip(b.times, fx.times) { XCTAssertClose(a, c) }
         for (a, c) in zip(b.beatTimes, fx.beat_times) { XCTAssertClose(a, c) }
         XCTAssertEqual(b.window(2.5), fx.window_2_5)
+        XCTAssertEqual(b.breaks, fx.breaks)
+        assertMetrics(b.metrics(), fx.metrics)
+        assertMetrics(b.metrics(window: 4.0), fx.metrics_4)
+    }
+
+    func testRecoversFromLevelShiftLikePython() throws {
+        let fx = try Fixtures.load("rr_buffer", as: Fixture.self).step
+        let b = RRBuffer()
+        for p in fx.inputs { b.add(p[0], at: p[1]) }
+        XCTAssertEqual(b.values, fx.values)
+        XCTAssertEqual(b.artefacts, fx.artefacts)
+        XCTAssertEqual(b.total, fx.total)
+        XCTAssertEqual(b.breaks, fx.breaks)
+        assertMetrics(b.metrics(), fx.metrics)
+        // 10 × 1200 then 60 × 950 ms: only the first five beats of the new level are lost
+        let shift = RRBuffer()
+        var t = 0.0
+        for v in Array(repeating: 1200.0, count: 10) + Array(repeating: 950.0, count: 60) { t += v / 1000; shift.add(v, at: t) }
+        XCTAssertEqual(shift.artefacts, 5)
+        XCTAssertEqual(shift.values.count, 65)
+        XCTAssertEqual(shift.breaks, [10])       // the first accepted 950 follows the five rejected ones
     }
 
     func testBeatClockWithSharedPacketTimesAndResync() throws {
@@ -71,12 +115,31 @@ final class RRBufferTests: XCTestCase {
 }
 
 final class SpectralTests: XCTestCase {
-    struct Case: Decodable { let t: [Double]; let rr: [Double]; let spectral: PySpectral? }
+    struct Case: Decodable { let t: [Double]; let rr: [Double]; let spectral: PySpectral?; let breathing_limit_hz: Double }
 
     func testMatchesPythonLombScargle() throws {
         for c in try Fixtures.load("spectral", as: [Case].self) {
             assertSpectral(spectralMetrics(beatTimes: c.t, rrMs: c.rr), c.spectral)
+            XCTAssertEqual(breathingLimitHz(rrMs: c.rr), c.breathing_limit_hz)
         }
+    }
+
+    func testBreathingWindowStopsAtTheMeanNyquistFrequency() throws {
+        XCTAssertClose(breathingLimitHz(rrMs: Array(repeating: 1200, count: 40)), 50.0 / 120.0)
+        XCTAssertEqual(breathingLimitHz(rrMs: Array(repeating: 800, count: 40)), 0.5)
+        let cases = try Fixtures.load("spectral", as: [Case].self)
+        // 24 breaths/min at 50 bpm is found below the capped edge; 0.415 Hz peaks on the edge and is unresolved
+        XCTAssertEqual(try XCTUnwrap(spectralMetrics(beatTimes: cases[5].t, rrMs: cases[5].rr)?.breathingRateBpm), 24, accuracy: 0.5)
+        XCTAssertNil(try XCTUnwrap(spectralMetrics(beatTimes: cases[6].t, rrMs: cases[6].rr)).breathingRateBpm)
+    }
+
+    func testBreathingWindow() throws {
+        let cases = try Fixtures.load("spectral", as: [Case].self)
+        // 7 breaths/min lies below the HF band but inside the 6–30 /min window
+        XCTAssertEqual(try XCTUnwrap(spectralMetrics(beatTimes: cases[3].t, rrMs: cases[3].rr)?.breathingRateBpm), 7, accuracy: 0.5)
+        // 0.098 Hz peaks on the window's first bin: unresolved
+        let edge = try XCTUnwrap(spectralMetrics(beatTimes: cases[4].t, rrMs: cases[4].rr))
+        XCTAssertNil(edge.breathingRateBpm)
     }
 
     func testPhysics() throws {
@@ -90,8 +153,8 @@ final class SpectralTests: XCTestCase {
 
 final class RealSessionTests: XCTestCase {
     struct Case: Decodable { let file: String; let settle_s: Double; let beats: [[Double]]; let metrics: PyMetrics?
-                             let spectral: PySpectral?; let artefacts: Int; let total: Int; let poincare: [Double]?
-                             let stress_index: Double? }
+                             let spectral: PySpectral?; let artefacts: Int; let total: Int; let breaks: [Int]
+                             let poincare: [Double]?; let stress_index: Double? }
 
     func testRecordedBandSessionsMatchPython() throws {
         let cases = try Fixtures.load("sessions", as: [Case].self)
@@ -101,9 +164,10 @@ final class RealSessionTests: XCTestCase {
             for beat in c.beats where beat[1] >= c.settle_s { b.add(beat[0], at: beat[1]) }
             XCTAssertEqual(b.artefacts, c.artefacts, c.file)
             XCTAssertEqual(b.total, c.total, c.file)
+            XCTAssertEqual(b.breaks, c.breaks, c.file)
             assertMetrics(b.metrics(), c.metrics)
             assertSpectral(b.spectral(), c.spectral)
-            assertPoincare(poincare(rr: b.values), c.poincare)
+            assertPoincare(poincare(rr: b.values, breaks: b.breaks), c.poincare)
             assertOptional(stressIndex(rr: b.values), c.stress_index, c.file)
         }
         XCTAssertTrue(cases.contains { $0.stress_index != nil }, "a session long enough for the stress index")

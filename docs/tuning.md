@@ -38,7 +38,7 @@ What the sections answer:
 |---|---|---|
 | Data | Is the protocol consistent? | ≥ 70 % of days measured, measurement times within an hour |
 | Signal quality | Is the band reading cleanly? | median rejected beats < 5 %, few low-confidence mornings |
-| Your numbers | Is the day-to-day noise normal? | lnRMSSD CV 3–8 % |
+| Your numbers | Is the day-to-day noise normal? | lnRMSSD CV about 3–13 % (most people 4–8 %; Bellenger 2022, Flatt & Esco 2015, see `docs/evidence.md` B). Published values are weekly CVs; the whole-history CV here reads a little higher |
 | Verdict vs how you felt | Do verdicts track how you feel? | mean feeling falls from ready → moderate → rest; score~feeling correlation above ~0.3 |
 | Illness warning | Does it catch sick days without crying wolf? | missed sick days → loosen; warnings with no sick tag nearby → tighten |
 | Context tags | Do alcohol / poor sleep show up as expected? | HRV z of tagged days clearly below the rest |

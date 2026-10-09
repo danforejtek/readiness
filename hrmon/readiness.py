@@ -2,14 +2,23 @@
 
 Method (Plews & Buchheit; Altini / HRV4Training):
   * one value per day: lnRMSSD and resting HR from the morning measurement
-  * baseline = mean and SD over the previous `baseline_days` (default 60) days, excluding today
+  * baseline = mean and SD over the previous `baseline_days` (default 60) days, excluding today; low-quality
+    mornings are left out of it (and of the 7-day average) once at least `min_baseline_days` clean ones exist
   * normal range = mean ± 0.5 SD (the "smallest worthwhile change")
-  * 7-day rolling average of lnRMSSD shows accumulated fatigue when it drops below the normal range
-  * today's z-scores drive the verdict; a raised resting HR together with a lowered HRV is the
-    classic early sign of infection or heavy systemic stress and raises the illness warning
-  * Regeneration and Stress (0–10, 5 = your normal) follow the Kubios PNS/SNS indices, but each component is
-    scored against the same personal baseline instead of population norms:
-    Regeneration from mean RR, RMSSD and SD1; Stress from mean HR, √(Baevsky stress index) and SD2 (reversed)
+  * 7-day rolling average of lnRMSSD shows accumulated fatigue when it drops below the normal range; it only
+    counts towards the verdict with at least `week_min_days` (3) mornings in the window (Plews 2014)
+  * today's z-scores drive the verdict; a raised resting HR together with a lowered HRV often precedes an
+    infection, but alcohol, poor sleep, travel and stress produce it too; it raises the illness warning
+    (thresholds are heuristics, not taken from a study)
+  * Regeneration and Stress (0–10, 5 = your normal, 4–6 = ±0.5 SD, 2 points = 1 SD), scored against the same
+    personal, clean-only baseline as the verdict:
+      Regeneration = z(lnRMSSD), your HRV against your own normal. SD1 is RMSSD/√2 and mean RR the reciprocal
+        of HR, so neither adds information (Brennan 2001, Ciccone 2017).
+      Stress = strain / load, ⅔ · z(resting HR) + ⅓ · −z(ln SD2): mostly resting HR, plus a smaller part from the
+        long-term variability SD2, Naranjo Orellana's (2015) Stress Score 1000/SD2 on the log scale. Without SD2
+        (imported rows) it is z(resting HR) alone. No index from a short resting recording measures sympathetic
+        activity (Billman 2013, Martelli 2014), so Stress is not called "sympathetic".
+    See docs/evidence.md, sections G, H and I.
 This is a training-guidance heuristic, not a medical device.
 """
 from __future__ import annotations
@@ -46,24 +55,24 @@ class Params:
     illness_z_hr: float = 1.5        # illness: resting HR z ≥ this and ≥ illness_bpm above normal …
     illness_bpm: float = 4.0
     illness_z_hrv: float = -1.0      # … while HRV z ≤ this,
-    illness_z_hr_alone: float = 2.5  # or resting HR z ≥ this on its own
+    illness_z_hr_alone: float = 2.5  # or resting HR z ≥ this on its own (still ≥ illness_bpm above normal)
     rest_z_hrv: float = -1.5         # rest if HRV z ≤ this, or
     rest_z_hr: float = 1.5           # resting HR z ≥ this, or both of the "combined" limits below
     rest_combo_z_hrv: float = -1.0
     rest_combo_z_hr: float = 1.0
     moderate_z_hr: float = 1.0       # moderate if HRV below range, resting HR z > this, or 7-day average below range
+    week_min_days: int = 3           # the 7-day average needs this many mornings before it can flag fatigue
     saturation_z: float = 1.5        # note when HRV z ≥ this and HR z ≤ −this
     low_quality_artefact_pct: float = 15.0
     low_quality_beats: int = 60
-    # Regeneration / Stress (0–10): value = clip(index_center + index_scale · z, 0, 10), z = mean of component z-scores.
-    # Each component has its own SD floor, like ln_sd_floor / hr_sd_floor above (mean HR reuses hr_sd_floor).
+    # Regeneration / Stress (0–10): value = clip(index_center + index_scale · z, 0, 10).
+    # Regeneration z = z(lnRMSSD) with ln_sd_floor; Stress z = weighted mean of z(resting HR) (hr_sd_floor) and
+    # −z(ln SD2) (ln_sd2_sd_floor) over the components that are present.
     index_center: float = 5.0
     index_scale: float = 2.0
-    rr_sd_floor: float = 25.0        # ms, mean RR (≈ 1.5 bpm at 60 bpm)
-    rmssd_sd_floor: float = 2.5      # ms (≈ ln_sd_floor at RMSSD 50 ms)
-    sd1_sd_floor: float = 1.8        # ms (SD1 ≈ RMSSD / √2)
-    sqrt_si_sd_floor: float = 0.2    # √SI, unitless
-    sd2_sd_floor: float = 3.0        # ms
+    stress_w_hr: float = 2 / 3
+    stress_w_sd2: float = 1 / 3
+    ln_sd2_sd_floor: float = 0.05    # ln SD2, like ln_sd_floor
 
 
 DEFAULT_PARAMS = Params()
@@ -100,7 +109,9 @@ class DayRecord:
 
 @dataclass(frozen=True)
 class Comparison:
-    """Today's value against the baseline average and against the previous measured morning, in %."""
+    """Today's value against the baseline average and against the previous measured morning, in %.
+
+    For HRV (`Assessment.ln_change`) the % is of RMSSD itself, 100 · (e^(Δ lnRMSSD) − 1), not of the log value."""
     vs_average_pct: Optional[float] = None
     vs_last_pct: Optional[float] = None
 
@@ -114,6 +125,7 @@ class Assessment:
     ln_mean: Optional[float] = None
     ln_sd: Optional[float] = None
     ln_week: Optional[float] = None  # 7-day rolling mean incl. today
+    week_n: int = 0                  # mornings in that 7-day mean; it flags fatigue only with ≥ week_min_days
     hr_mean: Optional[float] = None
     hr_sd: Optional[float] = None
     z_hrv: Optional[float] = None
@@ -123,8 +135,8 @@ class Assessment:
     low_confidence: bool = False
     notes: list[str] = field(default_factory=list)
     range_sd: float = 0.5
-    regeneration: Optional[float] = None   # 0–10, 5 = your normal, high = good (parasympathetic)
-    stress: Optional[float] = None         # 0–10, 5 = your normal, high = bad (sympathetic)
+    regeneration: Optional[float] = None   # 0–10, 5 = your normal; your HRV (lnRMSSD), high = better recovered
+    stress: Optional[float] = None         # 0–10, 5 = your normal; strain / load, high = more strain than usual
     z_regeneration: Optional[float] = None
     z_stress: Optional[float] = None
     ln_change: Comparison = Comparison()
@@ -190,37 +202,41 @@ def _positive(x: Optional[float]) -> Optional[float]:
     return x if x is not None and x > 0 else None
 
 
+def _finite(x: Optional[float]) -> Optional[float]:
+    return x if x is not None and math.isfinite(x) else None
+
+
 def _components(p: Params):
-    """(value of a record or None, SD floor, sign) per component; the order is part of the Swift parity."""
+    """(value of a record or None, SD floor, sign, weight) per component; the order is part of the Swift parity."""
     regeneration = (
-        (lambda r: _positive(r.mean_rr), p.rr_sd_floor, 1.0),
-        (lambda r: _positive(r.rmssd), p.rmssd_sd_floor, 1.0),
-        (lambda r: _positive(r.sd1), p.sd1_sd_floor, 1.0),
+        (lambda r: _finite(r.ln_rmssd), p.ln_sd_floor, 1.0, 1.0),
     )
     stress = (
-        (lambda r: _positive(r.mean_hr), p.hr_sd_floor, 1.0),
-        (lambda r: math.sqrt(r.stress_index) if _positive(r.stress_index) else None, p.sqrt_si_sd_floor, 1.0),
-        (lambda r: _positive(r.sd2), p.sd2_sd_floor, -1.0),   # less long-term variability = more sympathetic
+        (lambda r: _positive(r.mean_hr), p.hr_sd_floor, 1.0, p.stress_w_hr),
+        # Naranjo's Stress Score 1000/SD2 on the log scale: ln SS = ln 1000 − ln SD2, so z(ln SS) = −z(ln SD2)
+        (lambda r: math.log(r.sd2) if _positive(r.sd2) else None, p.ln_sd2_sd_floor, -1.0, p.stress_w_sd2),
     )
     return regeneration, stress
 
 
 def ans_z(records: list[DayRecord], index: int, params: Params = DEFAULT_PARAMS) -> tuple[Optional[float], Optional[float]]:
-    """Regeneration and Stress z: the mean z-score of the components that today and at least
-    `min_baseline_days` baseline days have (same 60-day window as the verdict, today excluded)."""
+    """Regeneration and Stress z: the weighted mean z-score of the components that today and at least
+    `min_baseline_days` baseline days have. The baseline is the verdict's (`_baseline`: same 60-day window,
+    today excluded, low-quality mornings left out once enough clean ones exist)."""
     p = params
     today = records[index]
-    history = [r for r in records[:index] if (today.day - r.day).days <= p.baseline_days]
+    history, _ = _baseline(records, index, p)
     out = []
     for parts in _components(p):
-        zs = []
-        for get, floor, sign in parts:
+        num = den = 0.0
+        for get, floor, sign, weight in parts:
             v = get(today)
             hist = [x for x in (get(r) for r in history) if x is not None]
             if v is None or len(hist) < p.min_baseline_days:
                 continue
-            zs.append(sign * (v - statistics.fmean(hist)) / max(statistics.stdev(hist), floor))
-        out.append(statistics.fmean(zs) if zs else None)
+            num += weight * sign * (v - statistics.fmean(hist)) / max(statistics.stdev(hist), floor)
+            den += weight
+        out.append(num / den if den > 0 else None)
     return out[0], out[1]
 
 
@@ -237,6 +253,49 @@ def pct_change(value: Optional[float], ref: Optional[float]) -> Optional[float]:
     return 100.0 * (value - ref) / abs(ref)
 
 
+def rmssd_pct(ln_value: Optional[float], ln_ref: Optional[float]) -> Optional[float]:
+    """% change of RMSSD between two lnRMSSD values: 100 · (e^(ln_value − ln_ref) − 1)."""
+    if ln_value is None or ln_ref is None:
+        return None
+    return 100.0 * (math.exp(ln_value - ln_ref) - 1.0)
+
+
+def _baseline(records: list[DayRecord], index: int, p: Params) -> tuple[list[DayRecord], bool]:
+    """The earlier mornings in the baseline window, and whether low-quality ones were left out: they are once
+    at least `min_baseline_days` clean mornings exist, otherwise every morning counts."""
+    today = records[index]
+    history = [r for r in records[:index] if (today.day - r.day).days <= p.baseline_days]
+    clean = [r for r in history if not r.low_quality_with(p)]
+    return (clean, True) if len(clean) >= p.min_baseline_days else (history, False)
+
+
+def _baseline_stats(base: list[DayRecord], p: Params) -> tuple[float, float, float, float]:
+    """lnRMSSD mean and SD, resting HR mean and SD, with the SD floors."""
+    ln_vals = [r.ln_rmssd for r in base]
+    hr_vals = [r.mean_hr for r in base]
+    return (statistics.fmean(ln_vals), max(statistics.stdev(ln_vals), p.ln_sd_floor),
+            statistics.fmean(hr_vals), max(statistics.stdev(hr_vals), p.hr_sd_floor))
+
+
+def _illness_rule(hr_gap: float, z_hrv: float, z_hr: float, p: Params) -> bool:
+    """Resting HR at least illness_bpm above normal, and either raised together with a lowered HRV
+    or far up on its own."""
+    if hr_gap < p.illness_bpm:
+        return False
+    return (z_hr >= p.illness_z_hr and z_hrv <= p.illness_z_hrv) or z_hr >= p.illness_z_hr_alone
+
+
+def _ill(records: list[DayRecord], index: int, p: Params) -> bool:
+    """Only the illness flag of the record at `index`: no notes, streak or Regeneration/Stress, so walking
+    back over a streak stays cheap."""
+    base, _ = _baseline(records, index, p)
+    if len(base) < p.min_baseline_days:
+        return False
+    ln_mean, ln_sd, hr_mean, hr_sd = _baseline_stats(base, p)
+    r = records[index]
+    return _illness_rule(r.mean_hr - hr_mean, (r.ln_rmssd - ln_mean) / ln_sd, (r.mean_hr - hr_mean) / hr_sd, p)
+
+
 def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[int] = None,
            params: Params = DEFAULT_PARAMS) -> Assessment:
     """Assess the record at `index` against the records before it."""
@@ -244,11 +303,15 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
     if index < 0:
         index += len(records)
     today = records[index]
-    history = [r for r in records[:index] if (today.day - r.day).days <= p.baseline_days]
+    history, clean_only = _baseline(records, index, p)
     a = Assessment(record=today, status=BASELINE, score=None, baseline_n=len(history),
                    low_confidence=today.low_quality_with(p), range_sd=p.range_sd)
-    week = [r.ln_rmssd for r in records[:index + 1] if 0 <= (today.day - r.day).days < 7]
+    # today always counts, earlier mornings by the same rule as the baseline; shown with any number of mornings,
+    # but it only flags fatigue with at least week_min_days of them
+    week = [r.ln_rmssd for j, r in enumerate(records[:index + 1]) if 0 <= (today.day - r.day).days < 7
+            and (j == index or not (clean_only and r.low_quality_with(p)))]
     a.ln_week = statistics.fmean(week) if week else None
+    a.week_n = len(week)
 
     a.z_regeneration, a.z_stress = ans_z(records, index, p)
     a.regeneration, a.stress = scale_index(a.z_regeneration, p), scale_index(a.z_stress, p)
@@ -256,7 +319,7 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
     prev_regen, prev_stress = (scale_index(z, p) for z in ans_z(records, index - 1, p)) if prev else (None, None)
     a.regeneration_change = Comparison(pct_change(a.regeneration, p.index_center), pct_change(a.regeneration, prev_regen))
     a.stress_change = Comparison(pct_change(a.stress, p.index_center), pct_change(a.stress, prev_stress))
-    a.ln_change = Comparison(None, pct_change(today.ln_rmssd, prev.ln_rmssd if prev else None))
+    a.ln_change = Comparison(None, rmssd_pct(today.ln_rmssd, prev.ln_rmssd if prev else None))
     a.hr_change = Comparison(None, pct_change(today.mean_hr, prev.mean_hr if prev else None))
 
     if len(history) < p.min_baseline_days:
@@ -274,33 +337,26 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
                            "baseline starts from clean mornings.")
         return a
 
-    ln_vals = [r.ln_rmssd for r in history]
-    hr_vals = [r.mean_hr for r in history]
-    a.ln_mean = statistics.fmean(ln_vals)
-    a.ln_sd = max(statistics.stdev(ln_vals), p.ln_sd_floor)
-    a.hr_mean = statistics.fmean(hr_vals)
-    a.hr_sd = max(statistics.stdev(hr_vals), p.hr_sd_floor)
+    a.ln_mean, a.ln_sd, a.hr_mean, a.hr_sd = _baseline_stats(history, p)
     a.z_hrv = (today.ln_rmssd - a.ln_mean) / a.ln_sd
     a.z_hr = (today.mean_hr - a.hr_mean) / a.hr_sd        # positive = heart beating faster than usual
-    a.ln_change = replace(a.ln_change, vs_average_pct=pct_change(today.ln_rmssd, a.ln_mean))
+    a.ln_change = replace(a.ln_change, vs_average_pct=rmssd_pct(today.ln_rmssd, a.ln_mean))
     a.hr_change = replace(a.hr_change, vs_average_pct=pct_change(today.mean_hr, a.hr_mean))
 
     composite = p.w_hrv * a.z_hrv - p.w_hr * a.z_hr
     a.score = int(max(0, min(100, round(75 + 15 * composite))))
 
     # illness / systemic stress: raised resting HR together with suppressed HRV
-    hr_up = a.z_hr >= p.illness_z_hr and today.mean_hr - a.hr_mean >= p.illness_bpm
-    a.illness = (hr_up and a.z_hrv <= p.illness_z_hrv) or a.z_hr >= p.illness_z_hr_alone
+    a.illness = _illness_rule(today.mean_hr - a.hr_mean, a.z_hrv, a.z_hr, p)
     if a.illness:
-        streak = 1
-        for j in range(index - 1, max(-1, index - 4), -1):
-            prev = assess(records, j, params=p) if j >= 0 else None
-            if prev is None or not prev.illness:
-                break
-            streak += 1
-        a.illness_streak = streak
+        # consecutive calendar days with the flag, walking back from today
+        j = index
+        while j > 0 and (records[j].day - records[j - 1].day).days == 1 and _ill(records, j - 1, p):
+            j -= 1
+        a.illness_streak = index - j + 1
 
-    week_low = a.ln_week is not None and a.ln_week < a.ln_mean - p.range_sd * a.ln_sd
+    week_low = (a.ln_week is not None and len(week) >= p.week_min_days
+                and a.ln_week < a.ln_mean - p.range_sd * a.ln_sd)
 
     if (a.illness or a.z_hrv <= p.rest_z_hrv or a.z_hr >= p.rest_z_hr
             or (a.z_hrv <= p.rest_combo_z_hrv and a.z_hr >= p.rest_combo_z_hr)):
@@ -315,11 +371,12 @@ def assess(records: list[DayRecord], index: int = -1, baseline_days: Optional[in
         days = f" for {a.illness_streak} days in a row" if a.illness_streak > 1 else ""
         if a.z_hrv <= p.illness_z_hrv:
             a.notes.append(f"Resting HR is {gap:.0f} bpm above your normal and HRV is below your normal{days}. "
-                           "This combination often appears a day or two before a cold or other infection, "
-                           "or after heavy stress. Take it easy, drink enough, and watch for symptoms.")
+                           "This pattern often appears one to three days before a cold or other infection, "
+                           "but alcohol, poor sleep, travel and stress produce it too. "
+                           "Take it easy, drink enough, and watch for symptoms.")
         else:
             a.notes.append(f"Resting HR is {gap:.0f} bpm above your normal{days}, far outside your usual range. "
-                           "Infection, heavy stress, a late meal or alcohol can all do this. "
+                           "Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this. "
                            "Take it easy and watch for symptoms.")
     if week_low:
         a.notes.append("Your 7-day HRV average is below your normal range. Fatigue has been building up "

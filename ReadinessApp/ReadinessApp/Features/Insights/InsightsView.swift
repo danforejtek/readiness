@@ -320,12 +320,12 @@ private struct SignalCard: View {
             parts.append("More than one morning in ten is noisy: check how the sensor sits before reading too much into the verdicts.")
         }
         if let cv = signal.lnCV {
-            if cv > 8 {
-                parts.append("Your HRV varies more than usual from day to day (3–8 % is typical). That often comes from an inconsistent protocol, such as time, posture or moving, rather than real changes.")
+            if cv > 13 {
+                parts.append("Your HRV varies more than usual from day to day (about 3–13 % is typical, most people 4–8 %). That often comes from an inconsistent protocol, such as time, posture or moving, rather than real changes.")
             } else if cv < 3 {
-                parts.append("Your HRV is very steady from day to day (3–8 % is typical).")
+                parts.append("Your HRV is very steady from day to day (about 3–13 % is typical, most people 4–8 %).")
             } else {
-                parts.append("Day-to-day variation is in the typical 3–8 % range.")
+                parts.append("Day-to-day variation is in the typical range of about 3–13 % (most people 4–8 %).")
             }
         }
         return parts.joined(separator: " ")

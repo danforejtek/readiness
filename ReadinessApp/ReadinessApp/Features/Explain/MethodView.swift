@@ -6,32 +6,36 @@ struct MethodView: View {
     var body: some View {
         List {
             Section("The measurement") {
-                Para("Measure right after waking, before you get up, coffee or phone. Lie on your back in the same position every day.")
-                Para("Put on your heart-rate sensor so it sits snugly with good skin contact: a chest strap with moistened electrodes, or an armband on the forearm. The first 15 seconds let your heart settle and are not used. The next 120 seconds are measured.")
+                Para("Measure right after waking, before you get up, coffee or phone. Lie on your back in the same position every day. Empty your bladder first, or always do the same. A full bladder raises your blood pressure.")
+                Para("Put on your heart-rate sensor so it sits snugly with good skin contact: a chest strap with moistened electrodes, or an armband on the forearm. The first \(Int(AppSettings.settleSeconds)) seconds let your heart settle and are not used. The next \(Int(AppSettings.measureSeconds)) seconds are measured. If too many beats are rejected and fewer than \(AppSettings.minCleanBeats) clean ones are in by then, the app keeps measuring for up to \(Int(AppSettings.maxExtensionS)) seconds more.")
                 Para("Breathe normally. Moving, talking or a loose sensor produce rejected beats and a less reliable result.")
+                Para("An optical armband measures pulse-rate variability: the pulse at your arm, not the heart's electrical signal that an ECG chest strap records. At rest the two agree well, but the optical signal is more sensitive to arm movement, so keep the arm still.")
             }
             Section("Your normal") {
                 Para("Each morning gives two numbers: lnRMSSD, your heart rate variability, and resting heart rate.")
                 Para("Your normal is the average of the previous 60 days, today excluded. Your normal range is that average plus or minus half a standard deviation. Sports scientists use this band as the smallest change that matters.")
                 Para("The app needs \(Readiness.minBaselineDays) mornings before it gives verdicts. It keeps learning for two months, so the range adapts to fitness changes.")
+                Para("Noisy mornings, the ones marked low confidence, are left out of your average and range once there are seven clean mornings, so one bad reading does not shift your normal.")
+                Para("The 7-day HRV average can flag fatigue only once at least \(Readiness.weekMinDays) mornings fall in the seven days. A study of how often athletes need to measure (Plews and colleagues, 2014) found that three mornings a week reproduce the weekly picture; fewer can mislead.")
             }
             Section("The verdict") {
                 Rule(status: .rest, text: "HRV 1.5 or more standard deviations below normal, or resting HR 1.5 or more above, or HRV at least 1 below together with resting HR at least 1 above, or the illness warning.")
-                Rule(status: .moderate, text: "HRV below your normal range, or resting HR more than 1 standard deviation above normal, or the 7-day HRV average below your range.")
+                Rule(status: .moderate, text: "HRV below your normal range, or resting HR more than 1 standard deviation above normal, or the 7-day HRV average below your range (with at least \(Readiness.weekMinDays) mornings in the week).")
                 Rule(status: .ready, text: "Everything else: HRV and resting HR where they usually are, or better.")
             }
             Section("Possible illness") {
-                Para("Raised when resting HR is at least 1.5 standard deviations and 4 bpm above normal while HRV is at least 1 standard deviation below, or when resting HR alone is 2.5 standard deviations above.")
-                Para("This combination often shows up a day or two before cold symptoms. Several days in a row make it more convincing than a single morning.")
+                Para("Raised when resting HR is at least 1.5 standard deviations and 4 bpm above normal while HRV is at least 1 standard deviation below, or when resting HR alone is at least 2.5 standard deviations and 4 bpm above normal.")
+                Para("This pattern often shows up one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. The limits are this app's rules of thumb, not taken from a study. Several days in a row make it more convincing than a single morning; the streak counts consecutive calendar days, so a day without a measurement ends it.")
             }
             Section("The score") {
                 Para(Metric.score.explanation)
             }
             Section("Stress and Regeneration") {
-                Para("Regeneration and Stress follow the PNS and SNS indices of Kubios HRV, a standard research tool. Kubios compares you with population norms; this app compares you with your own previous 60 days, like the verdict.")
-                Para("Regeneration is the average of three comparisons: mean RR, RMSSD and SD1. Stress averages resting HR, the square root of the stress index, and SD2, where less slow variation counts as more stress. Each comparison is in your own standard deviations.")
-                Para("The average becomes the number: 5 + 2 × the average, kept between 0 and 10. So 5 is your normal, 4–6 is your normal range (half a standard deviation either way), and 2 points are one standard deviation.")
-                Para("Both appear after \(Readiness.minBaselineDays) mornings. Mornings imported without beats have no SD1, SD2 or stress index; the numbers then use the parts that are there.")
+                Para("Both compare you with your own previous 60 days, the same clean mornings the verdict uses, in your own standard deviations.")
+                Para("Regeneration is your HRV, lnRMSSD, against your own normal. Nothing else goes in: SD1 is RMSSD divided by √2 and mean RR is just the inverse of heart rate, so adding them would count the same thing twice.")
+                Para("Stress is strain or load: two thirds resting HR, one third SD2, the slower variation, where less counts as more strain. That second part is the Stress Score of Naranjo Orellana and colleagues (2015) on a logarithmic scale. Mornings imported without beats have no SD2 and use resting HR alone. No heart measurement this short can show stress hormones or nerve activity directly, so read Stress as a load signal, whatever its cause.")
+                Para("The comparison becomes the number: 5 + 2 × the comparison, kept between 0 and 10. So 5 is your normal, 4–6 is your normal range (half a standard deviation either way), and 2 points are one standard deviation.")
+                Para("Both appear after \(Readiness.minBaselineDays) mornings.")
                 Para("“Above average” compares today with the average of your previous 60 days; for Regeneration and Stress the average is 5. “Since last measurement” compares with the previous morning. Neither number changes the verdict.")
             }
             Section("Limits") {

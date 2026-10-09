@@ -9,19 +9,21 @@ struct TrendsView: View {
     @State private var rangeDays = 30
     @State private var selectedDay: Date?
 
-    private var days: [DayAssessment] {
-        let all = MorningStore.dayAssessments(mornings, resets: AppSettings.parseResets(baselineResets))
+    /// Mornings within the chosen range. `body` assesses all mornings once per render (the expensive part) and
+    /// hands the result to every chart.
+    private func inRange(_ all: [DayAssessment]) -> [DayAssessment] {
         guard let last = all.last else { return [] }
         let cutoff = Readiness.calendar.date(byAdding: .day, value: -rangeDays, to: last.day)!
         return all.filter { $0.day >= cutoff }
     }
 
-    private var selected: DayAssessment? {
+    private func selected(in days: [DayAssessment]) -> DayAssessment? {
         guard let selectedDay else { return nil }
         return days.min { abs($0.day.timeIntervalSince(selectedDay)) < abs($1.day.timeIntervalSince(selectedDay)) }
     }
 
     var body: some View {
+        let days = inRange(MorningStore.dayAssessments(mornings, resets: AppSettings.parseResets(baselineResets)))
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
@@ -35,7 +37,7 @@ struct TrendsView: View {
                         ContentUnavailableView("No data yet", systemImage: "chart.xyaxis.line",
                                                description: Text("Trends appear after your first measurements."))
                     } else {
-                        if let s = selected { SelectedDayCard(day: s) }
+                        if let s = selected(in: days) { SelectedDayCard(day: s) }
                         ChartCard(title: "HRV (lnRMSSD)", subtitle: "green band = your normal range · dashed = 7-day average") {
                             HRVChart(days: days, selection: $selectedDay)
                         }
@@ -51,7 +53,7 @@ struct TrendsView: View {
                         ChartCard(title: "Readiness score", subtitle: "75 = your normal morning") {
                             ScoreChart(days: days, selection: $selectedDay)
                         }
-                        ChartCard(title: "Breathing rate", subtitle: "breaths per minute, from the HF peak") {
+                        ChartCard(title: "Breathing rate", subtitle: "breaths per minute, from the spectrum's peak · mornings without a clear peak are left out") {
                             BreathingChart(days: days, selection: $selectedDay)
                         }
                     }

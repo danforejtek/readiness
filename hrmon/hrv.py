@@ -12,6 +12,9 @@ from typing import Optional, Sequence
 VLF_BAND = (0.003, 0.04)
 LF_BAND = (0.04, 0.15)
 HF_BAND = (0.15, 0.40)
+# Breathing-rate search window, Hz (6–30 breaths/min): wider than HF so slow breathing is not misread. The upper
+# edge is capped at the mean Nyquist frequency of the beat series, HR / 120 Hz (Laguna 1998), see `breathing_limit_hz`.
+BREATHING_BAND = (0.10, 0.50)
 
 
 @dataclass
@@ -38,17 +41,32 @@ class SpectralMetrics:
     lf_nu: float           # LF / (LF + HF) in %
     hf_nu: float
     hf_peak_hz: float
-    breathing_rate_bpm: float   # HF peak frequency × 60, a rough respiration estimate
+    # Peak of 0.10 Hz up to min(0.50, HR / 120) Hz × 60, a rough respiration estimate; None when the peak sits on
+    # the window's edge
+    breathing_rate_bpm: Optional[float]
 
 
-def compute_metrics(rr: Sequence[float], duration_s: float = 0.0, artefacts: int = 0) -> Optional[HRVMetrics]:
+def successive_differences(rr: Sequence[float], breaks: Sequence[int] = ()) -> list[float]:
+    """rr[i] − rr[i−1] for every i ≥ 1 that is not in `breaks`.
+
+    `breaks` holds the indices whose interval directly follows a rejected one (see `RRBuffer.breaks`): the
+    difference across a removed beat is not a real beat-to-beat change and would inflate RMSSD, pNN50 and SD1
+    (Lipponen & Tarvainen 2019)."""
+    skip = set(breaks)
+    return [rr[i] - rr[i - 1] for i in range(1, len(rr)) if i not in skip]
+
+
+def compute_metrics(rr: Sequence[float], duration_s: float = 0.0, artefacts: int = 0,
+                    breaks: Sequence[int] = ()) -> Optional[HRVMetrics]:
+    """Time-domain HRV of clean RR intervals (ms). RMSSD and pNN50 use only the successive differences that do
+    not span a rejected beat (`breaks`); SDNN and mean RR/HR use every interval."""
     if len(rr) < 2:
         return None
     mean_rr = statistics.fmean(rr)
     sdnn = statistics.stdev(rr)
-    diffs = [b - a for a, b in zip(rr, rr[1:])]
-    rmssd = math.sqrt(statistics.fmean(d * d for d in diffs))
-    pnn50 = 100.0 * sum(1 for d in diffs if abs(d) > 50.0) / len(diffs)
+    diffs = successive_differences(rr, breaks)
+    rmssd = math.sqrt(statistics.fmean(d * d for d in diffs)) if diffs else 0.0
+    pnn50 = 100.0 * sum(1 for d in diffs if abs(d) > 50.0) / len(diffs) if diffs else 0.0
     total = len(rr) + artefacts
     return HRVMetrics(
         n=len(rr),
@@ -64,12 +82,15 @@ def compute_metrics(rr: Sequence[float], duration_s: float = 0.0, artefacts: int
     )
 
 
-def poincare(rr: Sequence[float]) -> Optional[tuple[float, float]]:
+def poincare(rr: Sequence[float], breaks: Sequence[int] = ()) -> Optional[tuple[float, float]]:
     """Poincaré descriptors (ms): SD1 = short-term, beat-to-beat spread across the identity line
-    (SD1² = ½·Var(ΔRR), about RMSSD/√2); SD2 = longer-term spread along it (SD2² = 2·SDNN² − SD1²)."""
+    (SD1² = ½·Var(ΔRR), about RMSSD/√2); SD2 = longer-term spread along it (SD2² = 2·SDNN² − SD1²).
+    Differences across a rejected beat (`breaks`) are left out, as in `compute_metrics`."""
     if len(rr) < 3:
         return None
-    diffs = [b - a for a, b in zip(rr, rr[1:])]
+    diffs = successive_differences(rr, breaks)
+    if len(diffs) < 2:
+        return None
     sd1_sq = 0.5 * statistics.variance(diffs)
     sd2_sq = max(0.0, 2.0 * statistics.variance(rr) - sd1_sq)
     return math.sqrt(sd1_sq), math.sqrt(sd2_sq)
@@ -126,13 +147,28 @@ def lomb_scargle_psd(t: Sequence[float], y: Sequence[float], freqs: Sequence[flo
     return out
 
 
+def breathing_limit_hz(rr_ms: Sequence[float]) -> float:
+    """Upper edge of the breathing search: min(0.50 Hz, mean HR / 120), the mean Nyquist frequency of a series
+    sampled once per beat (Laguna 1998), e.g. 0.42 Hz at 50 bpm."""
+    total = 0.0
+    for v in rr_ms:          # plain left-to-right sum (not sum(), which compensates since 3.12), as in the Swift port
+        total += v
+    mean_rr = total / len(rr_ms)
+    return min(BREATHING_BAND[1], (60000.0 / mean_rr) / 120.0)
+
+
 def spectral_metrics(beat_times: Sequence[float], rr_ms: Sequence[float],
                      min_beats: int = 30, min_span_s: float = 60.0) -> Optional[SpectralMetrics]:
-    """Frequency-domain HRV from beat timestamps (s) and RR intervals (ms)."""
+    """Frequency-domain HRV from beat timestamps (s) and RR intervals (ms).
+
+    The band powers use the standard VLF/LF/HF bands. The breathing rate is the spectral peak between
+    BREATHING_BAND[0] and `breathing_limit_hz` on the same grid; a peak in the window's first or last bin is
+    unresolved (breathing outside the window, or no clear rhythm) and gives None. Lomb-Scargle works on the real
+    beat times, so a rejected beat is simply a missing sample and needs no special handling."""
     if len(rr_ms) < min_beats or beat_times[-1] - beat_times[0] < min_span_s:
         return None
     step = 0.002
-    freqs = [VLF_BAND[0] + i * step for i in range(int((HF_BAND[1] - VLF_BAND[0]) / step) + 1)]
+    freqs = [VLF_BAND[0] + i * step for i in range(int((BREATHING_BAND[1] - VLF_BAND[0]) / step) + 1)]
     psd = lomb_scargle_psd(beat_times, rr_ms, freqs)
 
     def band(lo: float, hi: float) -> float:
@@ -141,6 +177,12 @@ def spectral_metrics(beat_times: Sequence[float], rr_ms: Sequence[float],
     vlf, lf, hf = band(*VLF_BAND), band(*LF_BAND), band(*HF_BAND)
     hf_idx = max((i for i, f in enumerate(freqs) if HF_BAND[0] <= f < HF_BAND[1]), key=lambda i: psd[i])
     hf_peak = freqs[hf_idx]
+    upper = breathing_limit_hz(rr_ms)
+    window = [i for i, f in enumerate(freqs) if BREATHING_BAND[0] <= f < upper]
+    breathing = None
+    if window:
+        breath_idx = max(window, key=lambda i: psd[i])
+        breathing = None if breath_idx in (window[0], window[-1]) else freqs[breath_idx] * 60.0
     lf_hf_sum = lf + hf
     return SpectralMetrics(
         vlf_ms2=vlf, lf_ms2=lf, hf_ms2=hf, total_ms2=vlf + lf + hf,
@@ -148,7 +190,7 @@ def spectral_metrics(beat_times: Sequence[float], rr_ms: Sequence[float],
         lf_nu=100.0 * lf / lf_hf_sum if lf_hf_sum else 0.0,
         hf_nu=100.0 * hf / lf_hf_sum if lf_hf_sum else 0.0,
         hf_peak_hz=hf_peak,
-        breathing_rate_bpm=hf_peak * 60.0,
+        breathing_rate_bpm=breathing,
     )
 
 
@@ -157,6 +199,11 @@ class RRBuffer:
 
     An interval is an artefact when it is outside [min_rr, max_rr] ms or deviates more than
     max_deviation (fraction) from the median of the last few accepted intervals.
+    Recovery from a genuine level shift: after `history` deviation rejections in a row (range
+    rejections do not count) that agree with each other (each within max_deviation of their own
+    median), they become the new reference; they stay counted as artefacts.
+    `breaks` lists the indices i ≥ 1 of `values` whose interval directly follows at least one rejected one,
+    so values[i] − values[i−1] spans a removed beat; the metrics skip those differences.
     `times` are packet arrival times (for windowing); `beat_times` are reconstructed from the
     cumulative RR sum (for spectral analysis), re-synced to packet time when they drift apart.
     """
@@ -169,9 +216,12 @@ class RRBuffer:
         self.times: list[float] = []
         self.beat_times: list[float] = []
         self.values: list[float] = []
+        self.breaks: list[int] = []
         self.artefacts = 0
         self.total = 0
+        self._after_rejection = False
         self._recent: deque[float] = deque(maxlen=history)
+        self._rejected: deque[float] = deque(maxlen=history)   # deviation rejections since the last accepted beat
         self._beat_clock: Optional[float] = None
 
     def add(self, rr_ms: float, t_s: float) -> bool:
@@ -181,18 +231,32 @@ class RRBuffer:
             self._beat_clock = t_s
         else:
             self._beat_clock += rr_ms / 1000.0
-        ok = self.min_rr <= rr_ms <= self.max_rr
-        if ok and len(self._recent) >= 3:
-            med = statistics.median(self._recent)
-            ok = abs(rr_ms - med) / med <= self.max_deviation
-        if not ok:
+        if not self.min_rr <= rr_ms <= self.max_rr:
             self.artefacts += 1
+            self._after_rejection = True
             return False
+        if len(self._recent) >= 3 and not self._close(rr_ms, statistics.median(self._recent)):
+            self.artefacts += 1
+            self._after_rejection = True
+            self._rejected.append(rr_ms)
+            if len(self._rejected) == self._rejected.maxlen:
+                med = statistics.median(self._rejected)
+                if all(self._close(v, med) for v in self._rejected):
+                    self._recent = deque(self._rejected, maxlen=self._recent.maxlen)
+                    self._rejected.clear()
+            return False
+        self._rejected.clear()
         self._recent.append(rr_ms)
+        if self._after_rejection and self.values:
+            self.breaks.append(len(self.values))
+        self._after_rejection = False
         self.times.append(t_s)
         self.beat_times.append(self._beat_clock)
         self.values.append(rr_ms)
         return True
+
+    def _close(self, rr_ms: float, ref: float) -> bool:
+        return abs(rr_ms - ref) / ref <= self.max_deviation
 
     def _start_index(self, seconds: Optional[float]) -> int:
         if seconds is None or not self.times:
@@ -202,12 +266,17 @@ class RRBuffer:
     def window(self, seconds: Optional[float] = None) -> list[float]:
         return self.values[self._start_index(seconds):]
 
+    def window_breaks(self, seconds: Optional[float] = None) -> list[int]:
+        """`breaks` relative to the start of `window(seconds)` (a break on the window's first beat is dropped)."""
+        start = self._start_index(seconds)
+        return [i - start for i in self.breaks if i > start]
+
     def metrics(self, seconds: Optional[float] = None) -> Optional[HRVMetrics]:
         vals = self.window(seconds)
         if len(vals) < 2:
             return None
         duration = self.times[-1] - self.times[-len(vals)]
-        return compute_metrics(vals, duration, self.artefacts if seconds is None else 0)
+        return compute_metrics(vals, duration, self.artefacts if seconds is None else 0, self.window_breaks(seconds))
 
     def spectral(self, seconds: Optional[float] = None) -> Optional[SpectralMetrics]:
         i = self._start_index(seconds)

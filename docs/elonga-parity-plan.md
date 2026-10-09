@@ -43,6 +43,8 @@ See `docs/ios-app-plan.md` for the architecture and `README.md` for commands.
 
 `hrmon/readiness.py`:
 
+- *Superseded:* the composition below was replaced by Regeneration = z(lnRMSSD) and Stress = ⅔ · z(resting HR)
+  + ⅓ · −z(ln SD2) after the literature review in `docs/evidence.md` (sections G, H, I); see `hrmon/readiness.py`.
 - These are Kubios-style PNS/SNS indices, but scored against the personal baseline instead of population norms.
   - Regeneration z = mean of z(mean RR), z(RMSSD) and z(SD1).
   - Stress z = mean of z(mean HR), z(√SI) and z(SD2).

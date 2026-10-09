@@ -44,13 +44,26 @@ enum Stats {
     }
 }
 
-public func computeMetrics(rr: [Double], durationS: Double = 0, artefacts: Int = 0) -> HRVMetrics? {
+/// rr[i] − rr[i−1] for every i ≥ 1 that is not in `breaks`. Port of `hrmon.hrv.successive_differences`.
+///
+/// `breaks` holds the indices whose interval directly follows a rejected one (`RRBuffer.breaks`): the difference
+/// across a removed beat is not a real beat-to-beat change and would inflate RMSSD, pNN50 and SD1
+/// (Lipponen & Tarvainen 2019).
+public func successiveDifferences(rr: [Double], breaks: [Int] = []) -> [Double] {
+    guard rr.count >= 2 else { return [] }
+    let skip = Set(breaks)
+    return (1..<rr.count).filter { !skip.contains($0) }.map { rr[$0] - rr[$0 - 1] }
+}
+
+/// Time-domain HRV of clean RR intervals (ms). RMSSD and pNN50 use only the successive differences that do not
+/// span a rejected beat (`breaks`); SDNN and mean RR/HR use every interval.
+public func computeMetrics(rr: [Double], durationS: Double = 0, artefacts: Int = 0, breaks: [Int] = []) -> HRVMetrics? {
     guard rr.count >= 2 else { return nil }
     let meanRR = Stats.mean(rr)
     let sdnn = Stats.stdev(rr)
-    let diffs = zip(rr, rr.dropFirst()).map { $1 - $0 }
-    let rmssd = Stats.mean(diffs.map { $0 * $0 }).squareRoot()
-    let pnn50 = 100.0 * Double(diffs.filter { abs($0) > 50.0 }.count) / Double(diffs.count)
+    let diffs = successiveDifferences(rr: rr, breaks: breaks)
+    let rmssd = diffs.isEmpty ? 0 : Stats.mean(diffs.map { $0 * $0 }).squareRoot()
+    let pnn50 = diffs.isEmpty ? 0 : 100.0 * Double(diffs.filter { abs($0) > 50.0 }.count) / Double(diffs.count)
     let total = rr.count + artefacts
     return HRVMetrics(
         n: rr.count, durationS: durationS, meanRR: meanRR, meanHR: 60000.0 / meanRR,
@@ -61,16 +74,17 @@ public func computeMetrics(rr: [Double], durationS: Double = 0, artefacts: Int =
 
 /// Poincaré descriptors in ms. Port of `hrmon.hrv.poincare`.
 /// SD1 is the short-term, beat-to-beat spread across the identity line (≈ RMSSD/√2);
-/// SD2 is the longer-term spread along it.
+/// SD2 is the longer-term spread along it. Differences across a rejected beat (`breaks`) are left out.
 public struct Poincare: Equatable, Sendable {
     public let sd1: Double
     public let sd2: Double
     public init(sd1: Double, sd2: Double) { self.sd1 = sd1; self.sd2 = sd2 }
 }
 
-public func poincare(rr: [Double]) -> Poincare? {
+public func poincare(rr: [Double], breaks: [Int] = []) -> Poincare? {
     guard rr.count >= 3 else { return nil }
-    let diffs = zip(rr, rr.dropFirst()).map { $1 - $0 }
+    let diffs = successiveDifferences(rr: rr, breaks: breaks)
+    guard diffs.count >= 2 else { return nil }
     let sd1Sq = 0.5 * Stats.variance(diffs)
     let sd2Sq = max(0, 2 * Stats.variance(rr) - sd1Sq)
     return Poincare(sd1: sd1Sq.squareRoot(), sd2: sd2Sq.squareRoot())

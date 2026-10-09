@@ -12,7 +12,7 @@ final class LiveMonitorSession {
 
     /// Rolling window for RMSSD/SDNN, as in `hrmon monitor --window 60`.
     static let hrvWindowS: Double = 60
-    /// Breathing rate needs about two minutes of beats for a stable HF peak.
+    /// Breathing rate needs about two minutes of beats for a stable breathing peak in the spectrum.
     static let breathingWindowS: Double = 120
 
     private(set) var connected = false

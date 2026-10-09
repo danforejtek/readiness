@@ -39,6 +39,22 @@ or ask Claude to build and install). Tick items off as you go and note anything 
 - [ ] During a measurement, walk away from the phone until it disconnects, come back within a minute: the
       countdown pauses and resumes. Stay away longer than 60 s: the measurement fails with a message.
 
+## Measurement extension
+
+- [ ] Start a measurement and keep moving the arm or loosen the band so many beats are rejected (amber dots).
+      When the 2:00 are up with fewer than 80 clean beats, the ring turns amber and shows
+      "extending · N more clean beats"; it finishes as soon as 80 clean beats are in, or after at most 60 s more.
+- [ ] A normal, still measurement finishes at 2:00 as before, with no extension.
+
+## Rejected beats and older mornings
+
+- [ ] First launch after updating: open an older morning that had amber (rejected) beats. Its Poincaré plot has
+      no point for the pair of beats on either side of a rejected one, and SD1/SD2 may differ slightly from
+      before (`Morning.breakIndices` recovered at launch; RMSSD and the verdict stay as stored). A clean morning
+      looks exactly as before.
+- [ ] A morning whose breathing rate is below 9/min shows "Slow breathing: LF/HF is not interpretable this
+      morning." under the spectrum.
+
 ## Light and dark
 
 - [x] Switch the phone to dark mode (Control Centre) and look at Today, Trends, a morning's detail and Settings.

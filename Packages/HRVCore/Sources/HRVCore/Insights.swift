@@ -82,7 +82,7 @@ public struct InsightsReport: Sendable {
         public let p90ArtefactPct: Double
         public let lowConfidence: Int
         public let mornings: Int
-        /// Day-to-day coefficient of variation of lnRMSSD (%); 3–8 % is typical with a consistent protocol.
+        /// Day-to-day coefficient of variation of lnRMSSD (%); about 3–13 % is typical (most people 4–8 %).
         public let lnCV: Double?
     }
 

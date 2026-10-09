@@ -2,11 +2,17 @@ import Foundation
 
 /// Readiness and illness assessment from the daily morning HRV history. Port of `hrmon.readiness`.
 ///
-/// Baseline = mean/SD of lnRMSSD and resting HR over the previous `baselineDays` (excluding today),
-/// normal range = mean ± 0.5 SD, 7-day rolling lnRMSSD average, z-scores drive the verdict.
-/// A raised resting HR with suppressed HRV raises the illness warning. Training heuristic, not medical advice.
-/// Regeneration and Stress (0–10, 5 = your normal) are Kubios-style PNS/SNS indices scored against the same
-/// personal baseline: Regeneration from mean RR, RMSSD and SD1; Stress from mean HR, √SI and SD2 (reversed).
+/// Baseline = mean/SD of lnRMSSD and resting HR over the previous `baselineDays` (excluding today; low-quality
+/// mornings left out once at least `minBaselineDays` clean ones exist), normal range = mean ± 0.5 SD,
+/// 7-day rolling lnRMSSD average (flags fatigue only with at least `weekMinDays` mornings, Plews 2014),
+/// z-scores drive the verdict.
+/// A raised resting HR with suppressed HRV raises the illness warning; it often precedes an infection, but alcohol,
+/// poor sleep, travel and stress produce it too. Training heuristic, not medical advice.
+/// Regeneration and Stress (0–10, 5 = your normal, 4–6 = ±0.5 SD, 2 points = 1 SD) are scored against the verdict's
+/// personal, clean-only baseline. Regeneration = z(lnRMSSD), your HRV against your own normal. Stress is strain /
+/// load: ⅔ · z(resting HR) + ⅓ · −z(ln SD2), Naranjo Orellana's (2015) Stress Score 1000/SD2 on the log scale, or
+/// z(resting HR) alone without SD2. No short HRV index measures sympathetic activity, so Stress is not called that.
+/// See docs/evidence.md, sections G, H and I.
 public enum ReadinessStatus: String, Sendable, Codable {
     case ready, moderate, rest, baseline
 }
@@ -42,6 +48,7 @@ public struct DayRecord: Equatable, Sendable {
 }
 
 /// Today's value against the baseline average and against the previous measured morning, in %.
+/// For HRV (`Assessment.lnChange`) the % is of RMSSD itself, 100 · (e^(Δ lnRMSSD) − 1), not of the log value.
 public struct Comparison: Equatable, Sendable {
     public var vsAveragePct: Double?
     public var vsLastPct: Double?
@@ -61,6 +68,8 @@ public struct Assessment: Equatable, Sendable {
     public var lnSD: Double?
     /// 7-day rolling mean of lnRMSSD including today.
     public var lnWeek: Double?
+    /// Mornings in `lnWeek`; it flags fatigue only with at least `Readiness.weekMinDays`.
+    public var weekN = 0
     public var hrMean: Double?
     public var hrSD: Double?
     public var zHRV: Double?
@@ -69,7 +78,8 @@ public struct Assessment: Equatable, Sendable {
     public var illnessStreak = 0
     public var lowConfidence = false
     public var notes: [String] = []
-    /// 0–10, 5 = your normal; high Regeneration is good (parasympathetic), high Stress is bad (sympathetic).
+    /// 0–10, 5 = your normal. Regeneration is your HRV (lnRMSSD), high = better recovered than usual; Stress is
+    /// strain / load (mostly resting HR, partly SD2), high = more strain than usual.
     public var regeneration: Double?
     public var stress: Double?
     public var zRegeneration: Double?
@@ -99,14 +109,15 @@ public enum Readiness {
     public static let minBaselineDays = 7
     public static let lnSDFloor = 0.05
     public static let hrSDFloor = 1.5
+    public static let illnessBpm = 4.0
+    /// The 7-day average needs this many mornings in its window before it can flag fatigue (Plews 2014).
+    public static let weekMinDays = 3
     // Regeneration / Stress, same defaults as `Params` in hrmon/readiness.py.
     public static let indexCenter = 5.0
     public static let indexScale = 2.0
-    public static let rrSDFloor = 25.0
-    public static let rmssdSDFloor = 2.5
-    public static let sd1SDFloor = 1.8
-    public static let sqrtSISDFloor = 0.2
-    public static let sd2SDFloor = 3.0
+    public static let stressWeightHR = 2.0 / 3.0
+    public static let stressWeightSD2 = 1.0 / 3.0
+    public static let lnSD2SDFloor = 0.05
     /// Calendar used for day arithmetic; Gregorian in the current time zone by default.
     nonisolated(unsafe) public static var calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)
@@ -118,37 +129,37 @@ public enum Readiness {
         calendar.dateComponents([.day], from: calendar.startOfDay(for: earlier), to: calendar.startOfDay(for: later)).day ?? 0
     }
 
-    private typealias Component = (value: @Sendable (DayRecord) -> Double?, floor: Double, sign: Double)
+    private typealias Component = (value: @Sendable (DayRecord) -> Double?, floor: Double, sign: Double, weight: Double)
 
     private static func positive(_ x: Double?) -> Double? { x.flatMap { $0 > 0 ? $0 : nil } }
 
     // Order matters for parity with `_components` in Python.
     private static let regenerationComponents: [Component] = [
-        ({ positive($0.meanRR) }, rrSDFloor, 1),
-        ({ positive($0.rmssd) }, rmssdSDFloor, 1),
-        ({ positive($0.sd1) }, sd1SDFloor, 1),
+        ({ $0.lnRMSSD.isFinite ? $0.lnRMSSD : nil }, lnSDFloor, 1, 1),
     ]
     private static let stressComponents: [Component] = [
-        ({ positive($0.meanHR) }, hrSDFloor, 1),
-        ({ positive($0.stressIndex).map { $0.squareRoot() } }, sqrtSISDFloor, 1),
-        ({ positive($0.sd2) }, sd2SDFloor, -1),   // less long-term variability = more sympathetic
+        ({ positive($0.meanHR) }, hrSDFloor, 1, stressWeightHR),
+        // Naranjo's Stress Score 1000/SD2 on the log scale: ln SS = ln 1000 − ln SD2, so z(ln SS) = −z(ln SD2)
+        ({ positive($0.sd2).map { log($0) } }, lnSD2SDFloor, -1, stressWeightSD2),
     ]
 
-    /// Regeneration and Stress z: the mean z-score of the components that today and at least `minBaselineDays`
-    /// baseline days have (same window as the verdict, today excluded). Port of `ans_z`.
+    /// Regeneration and Stress z: the weighted mean z-score of the components that today and at least
+    /// `minBaselineDays` baseline days have. The baseline is the verdict's (`baseline`: same window, today excluded,
+    /// low-quality mornings left out once enough clean ones exist). Port of `ans_z`.
     public static func ansZ(_ records: [DayRecord], index: Int, baselineDays: Int = 60) -> (regeneration: Double?, stress: Double?) {
         let today = records[index]
-        let history = records[..<index].filter { daysBetween($0.when, today.when) <= baselineDays }
-        func meanZ(_ parts: [Component]) -> Double? {
-            var zs: [Double] = []
+        let history = baseline(records, index: index, baselineDays: baselineDays).days
+        func weightedZ(_ parts: [Component]) -> Double? {
+            var num = 0.0, den = 0.0
             for c in parts {
                 let hist = history.compactMap(c.value)
                 guard let v = c.value(today), hist.count >= minBaselineDays else { continue }
-                zs.append(c.sign * (v - Stats.mean(hist)) / max(Stats.stdev(hist), c.floor))
+                num += c.weight * c.sign * (v - Stats.mean(hist)) / max(Stats.stdev(hist), c.floor)
+                den += c.weight
             }
-            return zs.isEmpty ? nil : Stats.mean(zs)
+            return den > 0 ? num / den : nil
         }
-        return (meanZ(regenerationComponents), meanZ(stressComponents))
+        return (weightedZ(regenerationComponents), weightedZ(stressComponents))
     }
 
     /// z → 0–10 with 5 = your normal: round(clip(5 + 2·z, 0, 10), 1).
@@ -162,15 +173,57 @@ public enum Readiness {
         return 100 * (value - ref) / abs(ref)
     }
 
+    /// % change of RMSSD between two lnRMSSD values: 100 · (e^(lnValue − lnRef) − 1).
+    public static func rmssdPct(_ lnValue: Double?, _ lnRef: Double?) -> Double? {
+        guard let lnValue, let lnRef else { return nil }
+        return 100 * (exp(lnValue - lnRef) - 1)
+    }
+
+    /// The earlier mornings in the baseline window, and whether low-quality ones were left out: they are once at
+    /// least `minBaselineDays` clean mornings exist, otherwise every morning counts. Port of `_baseline`.
+    static func baseline(_ records: [DayRecord], index: Int, baselineDays: Int) -> (days: [DayRecord], cleanOnly: Bool) {
+        let today = records[index]
+        let history = records[..<index].filter { daysBetween($0.when, today.when) <= baselineDays }
+        let clean = history.filter { !$0.lowQuality }
+        return clean.count >= minBaselineDays ? (clean, true) : (history, false)
+    }
+
+    /// lnRMSSD mean and SD, resting HR mean and SD, with the SD floors.
+    static func baselineStats(_ base: [DayRecord]) -> (lnMean: Double, lnSD: Double, hrMean: Double, hrSD: Double) {
+        let lnVals = base.map(\.lnRMSSD), hrVals = base.map(\.meanHR)
+        return (Stats.mean(lnVals), max(Stats.stdev(lnVals), lnSDFloor), Stats.mean(hrVals), max(Stats.stdev(hrVals), hrSDFloor))
+    }
+
+    /// Resting HR at least `illnessBpm` above normal, and either raised together with a lowered HRV or far up on its own.
+    static func illnessRule(hrGap: Double, zHRV: Double, zHR: Double) -> Bool {
+        guard hrGap >= illnessBpm else { return false }
+        return (zHR >= 1.5 && zHRV <= -1.0) || zHR >= 2.5
+    }
+
+    /// Only the illness flag of the record at `index`: no notes, streak or Regeneration/Stress, so walking back
+    /// over a streak stays cheap. Port of `_ill`.
+    static func isIll(_ records: [DayRecord], index: Int, baselineDays: Int) -> Bool {
+        let base = baseline(records, index: index, baselineDays: baselineDays).days
+        guard base.count >= minBaselineDays else { return false }
+        let s = baselineStats(base), r = records[index]
+        return illnessRule(hrGap: r.meanHR - s.hrMean, zHRV: (r.lnRMSSD - s.lnMean) / s.lnSD, zHR: (r.meanHR - s.hrMean) / s.hrSD)
+    }
+
     /// Assess the record at `index` (negative counts from the end) against the records before it.
     public static func assess(_ records: [DayRecord], index: Int = -1, baselineDays: Int = 60) -> Assessment {
         let idx = index < 0 ? index + records.count : index
         let today = records[idx]
-        let history = records[..<idx].filter { daysBetween($0.when, today.when) <= baselineDays }
+        let (history, cleanOnly) = baseline(records, index: idx, baselineDays: baselineDays)
         var a = Assessment(record: today, status: .baseline, score: nil, baselineN: history.count)
         a.lowConfidence = today.lowQuality
-        let week = records[...idx].filter { let d = daysBetween($0.when, today.when); return d >= 0 && d < 7 }.map(\.lnRMSSD)
+        // today always counts, earlier mornings by the same rule as the baseline; shown with any number of mornings,
+        // but it only flags fatigue with at least `weekMinDays` of them
+        let week = records[...idx].indices.filter { j in
+            let d = daysBetween(records[j].when, today.when)
+            return d >= 0 && d < 7 && (j == idx || !(cleanOnly && records[j].lowQuality))
+        }.map { records[$0].lnRMSSD }
         a.lnWeek = week.isEmpty ? nil : Stats.mean(week)
+        a.weekN = week.count
 
         let z = ansZ(records, index: idx, baselineDays: baselineDays)
         a.zRegeneration = z.regeneration; a.zStress = z.stress
@@ -181,7 +234,7 @@ public enum Readiness {
                                           vsLastPct: pctChange(a.regeneration, scaleIndex(prevZ.regeneration)))
         a.stressChange = Comparison(vsAveragePct: pctChange(a.stress, indexCenter),
                                     vsLastPct: pctChange(a.stress, scaleIndex(prevZ.stress)))
-        a.lnChange = Comparison(vsLastPct: pctChange(today.lnRMSSD, prev?.lnRMSSD))
+        a.lnChange = Comparison(vsLastPct: rmssdPct(today.lnRMSSD, prev?.lnRMSSD))
         a.hrChange = Comparison(vsLastPct: pctChange(today.meanHR, prev?.meanHR))
 
         if history.count < minBaselineDays {
@@ -198,34 +251,29 @@ public enum Readiness {
             return a
         }
 
-        let lnVals = history.map(\.lnRMSSD)
-        let hrVals = history.map(\.meanHR)
-        let lnMean = Stats.mean(lnVals), lnSD = max(Stats.stdev(lnVals), lnSDFloor)
-        let hrMean = Stats.mean(hrVals), hrSD = max(Stats.stdev(hrVals), hrSDFloor)
+        let (lnMean, lnSD, hrMean, hrSD) = baselineStats(history)
         a.lnMean = lnMean; a.lnSD = lnSD; a.hrMean = hrMean; a.hrSD = hrSD
         let zHRV = (today.lnRMSSD - lnMean) / lnSD
         let zHR = (today.meanHR - hrMean) / hrSD
         a.zHRV = zHRV; a.zHR = zHR
-        a.lnChange.vsAveragePct = pctChange(today.lnRMSSD, lnMean)
+        a.lnChange.vsAveragePct = rmssdPct(today.lnRMSSD, lnMean)
         a.hrChange.vsAveragePct = pctChange(today.meanHR, hrMean)
 
         let composite = 0.65 * zHRV - 0.35 * zHR
         a.score = Int(max(0, min(100, (75 + 15 * composite).rounded())))
 
-        let hrUp = zHR >= 1.5 && today.meanHR - hrMean >= 4.0
-        a.illness = (hrUp && zHRV <= -1.0) || zHR >= 2.5
+        a.illness = illnessRule(hrGap: today.meanHR - hrMean, zHRV: zHRV, zHR: zHR)
         if a.illness {
-            var streak = 1
-            var j = idx - 1
-            while j >= 0, j > idx - 4 {
-                guard assess(records, index: j, baselineDays: baselineDays).illness else { break }
-                streak += 1
+            // consecutive calendar days with the flag, walking back from today
+            var j = idx
+            while j > 0, daysBetween(records[j - 1].when, records[j].when) == 1,
+                  isIll(records, index: j - 1, baselineDays: baselineDays) {
                 j -= 1
             }
-            a.illnessStreak = streak
+            a.illnessStreak = idx - j + 1
         }
 
-        let weekLow = a.lnWeek.map { $0 < lnMean - 0.5 * lnSD } ?? false
+        let weekLow = week.count >= weekMinDays && (a.lnWeek.map { $0 < lnMean - 0.5 * lnSD } ?? false)
 
         if a.illness || zHRV <= -1.5 || zHR >= 1.5 || (zHRV <= -1.0 && zHR >= 1.0) {
             a.status = .rest
@@ -239,9 +287,9 @@ public enum Readiness {
             let gap = f0(today.meanHR - hrMean)
             let days = a.illnessStreak > 1 ? " for \(a.illnessStreak) days in a row" : ""
             if zHRV <= -1.0 {
-                a.notes.append("Resting HR is \(gap) bpm above your normal and HRV is below your normal\(days). This combination often appears a day or two before a cold or other infection, or after heavy stress. Take it easy, drink enough, and watch for symptoms.")
+                a.notes.append("Resting HR is \(gap) bpm above your normal and HRV is below your normal\(days). This pattern often appears one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too. Take it easy, drink enough, and watch for symptoms.")
             } else {
-                a.notes.append("Resting HR is \(gap) bpm above your normal\(days), far outside your usual range. Infection, heavy stress, a late meal or alcohol can all do this. Take it easy and watch for symptoms.")
+                a.notes.append("Resting HR is \(gap) bpm above your normal\(days), far outside your usual range. Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this. Take it easy and watch for symptoms.")
             }
         }
         if weekLow {

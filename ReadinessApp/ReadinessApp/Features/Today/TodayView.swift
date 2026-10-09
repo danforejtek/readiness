@@ -131,9 +131,11 @@ struct WhySection: View {
             if let week = assessment.lnWeek, let m = assessment.lnMean, let sd = assessment.lnSD {
                 WhyRow(title: "7-day HRV average", info: .weekAverage,
                        value: Fmt.n(week, 2),
-                       detail: week < m - 0.5 * sd
-                           ? "Below your normal range. Fatigue has been building up over several days."
-                           : "Within or above your normal range. No sign of accumulated fatigue.") {
+                       detail: week >= m - 0.5 * sd
+                           ? "Within or above your normal range. No sign of accumulated fatigue."
+                           : assessment.weekN < Readiness.weekMinDays
+                               ? "Below your normal range, but from only \(assessment.weekN) of the last 7 mornings: too few to show a trend."
+                               : "Below your normal range. Fatigue has been building up over several days.") {
                     RangeBar(value: week, mean: m, sd: sd, higherIsBetter: true)
                 }
             }

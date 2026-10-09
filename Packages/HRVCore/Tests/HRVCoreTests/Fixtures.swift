@@ -19,7 +19,7 @@ struct PyMetrics: Decodable {
 
 struct PySpectral: Decodable {
     let vlf_ms2: Double; let lf_ms2: Double; let hf_ms2: Double; let total_ms2: Double; let lf_hf: Double?
-    let lf_nu: Double; let hf_nu: Double; let hf_peak_hz: Double; let breathing_rate_bpm: Double
+    let lf_nu: Double; let hf_nu: Double; let hf_peak_hz: Double; let breathing_rate_bpm: Double?
 }
 
 func XCTAssertClose(_ a: Double, _ b: Double, rel: Double = 1e-9, abs absTol: Double = 1e-9,
@@ -55,5 +55,5 @@ func assertSpectral(_ s: SpectralMetrics?, _ py: PySpectral?, file: StaticString
     XCTAssertClose(s.lfNu, py.lf_nu, rel: 1e-6, file: file, line: line)
     XCTAssertClose(s.hfNu, py.hf_nu, rel: 1e-6, file: file, line: line)
     XCTAssertClose(s.hfPeakHz, py.hf_peak_hz, file: file, line: line)
-    XCTAssertClose(s.breathingRateBpm, py.breathing_rate_bpm, file: file, line: line)
+    assertOptional(s.breathingRateBpm, py.breathing_rate_bpm, "breathing rate", file: file, line: line)
 }

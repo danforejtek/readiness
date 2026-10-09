@@ -5,6 +5,16 @@ public enum HRVBands {
     public static let vlf = (0.003, 0.04)
     public static let lf = (0.04, 0.15)
     public static let hf = (0.15, 0.40)
+    /// Breathing-rate search window (6–30 breaths/min): wider than HF so slow breathing is not misread. The upper
+    /// edge is capped at the mean Nyquist frequency of the beat series, see `breathingLimitHz`.
+    public static let breathing = (0.10, 0.50)
+}
+
+/// Upper edge of the breathing search: min(0.50 Hz, mean HR / 120), the mean Nyquist frequency of a series sampled
+/// once per beat (Laguna 1998), e.g. 0.42 Hz at 50 bpm. Port of `hrmon.hrv.breathing_limit_hz`.
+public func breathingLimitHz(rrMs: [Double]) -> Double {
+    let meanRR = rrMs.reduce(0, +) / Double(rrMs.count)
+    return min(HRVBands.breathing.1, (60000.0 / meanRR) / 120.0)
 }
 
 /// Frequency-domain HRV. Port of `hrmon.hrv.spectral_metrics`.
@@ -17,7 +27,9 @@ public struct SpectralMetrics: Equatable, Sendable, Codable {
     public let lfNu: Double
     public let hfNu: Double
     public let hfPeakHz: Double
-    public let breathingRateBpm: Double
+    /// Peak of 0.10 Hz up to min(0.50, HR / 120) Hz × 60, a rough respiration estimate; nil when the peak sits on
+    /// the window's edge.
+    public let breathingRateBpm: Double?
 }
 
 /// Lomb-Scargle PSD of unevenly sampled data, scaled so the integral over frequency equals the variance
@@ -46,10 +58,14 @@ public func lombScarglePSD(t: [Double], y: [Double], freqs: [Double]) -> [Double
     return out
 }
 
+/// The band powers use the standard VLF/LF/HF bands. The breathing rate is the spectral peak between
+/// `HRVBands.breathing.0` and `breathingLimitHz` on the same grid; a peak in the window's first or last bin is
+/// unresolved (breathing outside the window, or no clear rhythm) and gives nil. Lomb-Scargle works on the real beat
+/// times, so a rejected beat is simply a missing sample and needs no special handling.
 public func spectralMetrics(beatTimes: [Double], rrMs: [Double], minBeats: Int = 30, minSpanS: Double = 60) -> SpectralMetrics? {
     guard rrMs.count >= minBeats, beatTimes[beatTimes.count - 1] - beatTimes[0] >= minSpanS else { return nil }
     let step = 0.002
-    let count = Int((HRVBands.hf.1 - HRVBands.vlf.0) / step) + 1
+    let count = Int((HRVBands.breathing.1 - HRVBands.vlf.0) / step) + 1
     let freqs = (0..<count).map { HRVBands.vlf.0 + Double($0) * step }
     let psd = lombScarglePSD(t: beatTimes, y: rrMs, freqs: freqs)
 
@@ -66,12 +82,20 @@ public func spectralMetrics(beatTimes: [Double], rrMs: [Double], minBeats: Int =
         if peakIdx < 0 || psd[i] > psd[peakIdx] { peakIdx = i }
     }
     let hfPeak = freqs[peakIdx]
+    let upper = breathingLimitHz(rrMs: rrMs)
+    let window = freqs.indices.filter { HRVBands.breathing.0 <= freqs[$0] && freqs[$0] < upper }
+    var breathing: Double?
+    if let first = window.first, let last = window.last {
+        var breathIdx = first
+        for i in window where psd[i] > psd[breathIdx] { breathIdx = i }
+        breathing = breathIdx == first || breathIdx == last ? nil : freqs[breathIdx] * 60.0
+    }
     let lfhfSum = lf + hf
     return SpectralMetrics(
         vlfMs2: vlf, lfMs2: lf, hfMs2: hf, totalMs2: vlf + lf + hf,
         lfHf: hf > 0 ? lf / hf : .infinity,
         lfNu: lfhfSum > 0 ? 100.0 * lf / lfhfSum : 0,
         hfNu: lfhfSum > 0 ? 100.0 * hf / lfhfSum : 0,
-        hfPeakHz: hfPeak, breathingRateBpm: hfPeak * 60.0
+        hfPeakHz: hfPeak, breathingRateBpm: breathing
     )
 }

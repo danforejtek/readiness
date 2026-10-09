@@ -19,6 +19,12 @@ enum AppSettings {
     static let bandBatteryDateKey = "bandBatteryDate"
     static let baselineResetsKey = "baselineResets"
 
+    /// Measurement auto-extension, the same rule as `hrmon/protocol.py`: when the nominal time is up with fewer
+    /// than `minCleanBeats` accepted beats, keep measuring until there are that many or `maxExtensionS` extra
+    /// seconds have passed, whichever comes first.
+    static let minCleanBeats = 80
+    static let maxExtensionS: Double = 60
+
     static var settleSeconds: Double { UserDefaults.standard.object(forKey: settleSecondsKey) as? Double ?? 15 }
     static var measureSeconds: Double { UserDefaults.standard.object(forKey: measureSecondsKey) as? Double ?? 120 }
     static var replaySpeed: Double {

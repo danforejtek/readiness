@@ -224,8 +224,10 @@ def baseline_stats(records: list[DayRecord]) -> Section:
             ["Resting HR mean ± SD", f"{statistics.fmean(hr):.1f} ± {statistics.stdev(hr):.1f} bpm"],
             ["lnRMSSD vs resting HR (rank corr.)", _fmt(spearman(ln, hr))],
         ]
-    note = ("Typical day-to-day CV of lnRMSSD is 3–8 %. Much higher usually means an inconsistent protocol "
-            "(time, posture, movement) rather than real changes.")
+    note = ("Typical day-to-day CV of lnRMSSD is about 3–13 % (most people 4–8 %). Much higher usually means an "
+            "inconsistent protocol (time, posture, movement) rather than real changes. Published values are mostly "
+            "weekly CVs; this one spans the whole history, so real trends make it read a little higher "
+            "(docs/evidence.md, section B).")
     return Section("Your numbers", ["", ""], rows, note)
 
 

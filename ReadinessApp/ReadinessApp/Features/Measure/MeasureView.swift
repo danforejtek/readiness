@@ -72,7 +72,7 @@ private struct IntroView: View {
                 Step(n: 1, text: "Right after waking, before coffee, phone or getting up.")
                 Step(n: 2, text: "Heart-rate sensor on and awake, snug with good skin contact (chest strap electrodes moistened).")
                 Step(n: 3, text: "Lie on your back, arm relaxed, breathe normally.")
-                Step(n: 4, text: "\(Fmt.mmss(settleS)) to settle, then \(Fmt.mmss(durationS)) of measurement. The clock starts with the first heartbeat.")
+                Step(n: 4, text: "\(Fmt.mmss(settleS)) to settle, then \(Fmt.mmss(durationS)) of measurement. The clock starts with the first heartbeat. If too many beats are rejected, it measures up to \(Int(AppSettings.maxExtensionS)) s longer.")
             }
             .padding()
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
@@ -121,14 +121,16 @@ struct LiveMeasureView: View {
 
     var body: some View {
         let settling = session.phase == .settling
-        let total = settling ? session.settleS : session.durationS
-        let remaining = settling ? session.settleRemaining : session.measureRemaining
+        let extending = !settling && session.extending
+        let total = settling ? session.settleS : extending ? AppSettings.maxExtensionS : session.durationS
+        let remaining = settling ? session.settleRemaining : extending ? session.extensionRemaining : session.measureRemaining
+        let ringColor = settling ? Palette.calm : extending ? Palette.caution : Palette.measure
         VStack(spacing: 20) {
             ZStack {
-                Circle().stroke((settling ? Palette.calm : Palette.measure).opacity(0.15), lineWidth: 14)
+                Circle().stroke(ringColor.opacity(0.15), lineWidth: 14)
                 Circle()
                     .trim(from: 0, to: total > 0 ? CGFloat(1 - remaining / total) : 0)
-                    .stroke(settling ? Palette.calm : Palette.measure, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                    .stroke(ringColor, style: StrokeStyle(lineWidth: 14, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 0.25), value: remaining)
                 VStack(spacing: 4) {
@@ -139,6 +141,13 @@ struct LiveMeasureView: View {
                     Text(settling ? "settling \(Fmt.mmss(remaining))" : Fmt.mmss(remaining))
                         .font(.title3.weight(.semibold)).monospacedDigit()
                         .foregroundStyle(settling ? Palette.calm : .primary)
+                    if extending {
+                        Text("extending · \(session.cleanBeatsNeeded) more clean beats")
+                            .font(.caption.weight(.semibold)).monospacedDigit()
+                            .foregroundStyle(Palette.caution)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: 170)
+                    }
                 }
             }
             .frame(width: 220, height: 220)

@@ -27,6 +27,10 @@ final class MeasurementSession {
     private(set) var tachogram: [TachoPoint] = []
     private(set) var settleRemaining: Double
     private(set) var measureRemaining: Double
+    /// True once the nominal duration is over but fewer than `AppSettings.minCleanBeats` clean beats are in.
+    private(set) var extending = false
+    /// Seconds left of the extension (at most `AppSettings.maxExtensionS`); only meaningful while `extending`.
+    private(set) var extensionRemaining = AppSettings.maxExtensionS
     private(set) var result: Morning?
     private(set) var interrupted = false
 
@@ -51,6 +55,8 @@ final class MeasurementSession {
 
     var artefactPct: Double { buffer.total > 0 ? 100 * Double(buffer.artefacts) / Double(buffer.total) : 0 }
     var cleanBeats: Int { buffer.values.count }
+    /// Clean beats still missing while the measurement is extended.
+    var cleanBeatsNeeded: Int { max(0, AppSettings.minCleanBeats - cleanBeats) }
 
     var elapsed: TimeInterval {
         guard let t0 else { return 0 }
@@ -91,6 +97,7 @@ final class MeasurementSession {
         recentHR = []; tachogram = []; allRR = []; allElapsed = []; t0 = nil; pauseStarted = nil; pausedTotal = 0
         result = nil; interrupted = false; battery = nil; deviceName = ""
         settleRemaining = settleS; measureRemaining = durationS
+        extending = false; extensionRemaining = AppSettings.maxExtensionS
         bufferReset()
     }
 
@@ -160,7 +167,17 @@ final class MeasurementSession {
             phase = .measuring
             statusText = "Measuring… breathe normally"
         }
-        if el >= settleS + durationS { finish() }
+        // Nominal time is up: stop, unless too many beats were rejected; then extend until enough clean
+        // beats are in or the extension runs out.
+        let measured = el - settleS
+        guard measured >= durationS else { return }
+        if cleanBeats >= AppSettings.minCleanBeats || measured >= durationS + AppSettings.maxExtensionS {
+            finish()
+        } else {
+            if !extending { statusText = "Too many rejected beats, measuring a little longer… keep still" }
+            extending = true
+            extensionRemaining = max(0, durationS + AppSettings.maxExtensionS - measured)
+        }
     }
 
     private func finish() {
@@ -170,7 +187,7 @@ final class MeasurementSession {
             return
         }
         let morning = Morning(date: Date(), metrics: m, spectral: buffer.spectral(), settleS: settleS, rrMs: buffer.values,
-                              beatTimes: buffer.beatTimes, allRR: allRR, allElapsed: allElapsed,
+                              beatTimes: buffer.beatTimes, allRR: allRR, allElapsed: allElapsed, breakIndices: buffer.breaks,
                               source: deviceName.hasPrefix("Replay") ? "replay" : "band", deviceName: deviceName)
         context?.insert(morning)
         try? context?.save()

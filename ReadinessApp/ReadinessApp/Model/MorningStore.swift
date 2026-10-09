@@ -53,15 +53,23 @@ enum MorningStore {
         return Readiness.assess(daily.map(\.dayRecord), index: index)
     }
 
-    /// Fill SD1/SD2 and the stress index on mornings stored before they existed. Only mornings with beats
-    /// can be filled; imported rows without beats stay empty. Returns the number of mornings updated.
+    /// Bring mornings stored by older versions up to date, at launch:
+    /// - `breakIndices` (differences across rejected beats) for mornings with raw intervals, recovered by re-running
+    ///   the artefact filter (`Morning.backfillBreaks`), with SD1/SD2 recomputed; clean mornings are untouched;
+    /// - SD1/SD2 and the stress index on mornings with beats stored before those existed.
+    /// Imported rows without beats stay empty. Idempotent. Returns the number of mornings updated.
     @discardableResult
     static func backfillBeatDerived(in context: ModelContext) -> Int {
-        let fetch = FetchDescriptor<Morning>(predicate: #Predicate { $0.sd1 == nil })
-        let missing = ((try? context.fetch(fetch)) ?? []).filter { $0.rrMs.count >= 3 }
-        for m in missing { m.fillBeatDerived() }
-        if !missing.isEmpty { try? context.save() }
-        return missing.count
+        let all = (try? context.fetch(FetchDescriptor<Morning>())) ?? []
+        var updated = 0
+        for m in all {
+            var changed = false
+            if m.breakIndices.isEmpty, !m.allRR.isEmpty { changed = m.backfillBreaks() }
+            if m.sd1 == nil, m.rrMs.count >= 3 { m.fillBeatDerived(); changed = true }
+            if changed { updated += 1 }
+        }
+        if updated > 0 { try? context.save() }
+        return updated
     }
 
     /// Whether a measurement (not demo data) exists for today; used to skip today's reminder.

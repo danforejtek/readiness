@@ -16,6 +16,7 @@ struct PyRecord: Decodable {
 
 struct PyAssessment: Decodable {
     let status: String; let score: Int?; let baseline_n: Int; let ln_mean: Double?; let ln_sd: Double?; let ln_week: Double?
+    let week_n: Int
     let hr_mean: Double?; let hr_sd: Double?; let z_hrv: Double?; let z_hr: Double?; let illness: Bool
     let illness_streak: Int; let low_confidence: Bool; let notes: [String]
     let regeneration: Double?; let stress: Double?; let z_regeneration: Double?; let z_stress: Double?
@@ -46,6 +47,7 @@ final class ReadinessTests: XCTestCase {
             XCTAssertEqual(a.status.rawValue, py.status, ctx)
             XCTAssertEqual(a.score, py.score, ctx)
             XCTAssertEqual(a.baselineN, py.baseline_n, ctx)
+            XCTAssertEqual(a.weekN, py.week_n, ctx)
             XCTAssertEqual(a.illness, py.illness, ctx)
             XCTAssertEqual(a.illnessStreak, py.illness_streak, ctx)
             XCTAssertEqual(a.lowConfidence, py.low_confidence, ctx)
@@ -69,9 +71,74 @@ final class ReadinessTests: XCTestCase {
         // the fixture must exercise every verdict, otherwise the comparison proves little
         XCTAssertEqual(statuses, ["baseline", "ready", "moderate", "rest"])
         XCTAssertTrue(fx.assessments.contains { $0.illness_streak == 2 })
-        // … and the 0–10 indices: clipped at both ends, and present on a day without beats (fallback components)
+        XCTAssertTrue(fx.assessments.contains { $0.illness_streak == 3 })
+        // resting HR z ≥ 2.5 but less than 4 bpm up is not an illness warning
+        XCTAssertTrue(fx.assessments.contains { ($0.z_hr ?? 0) >= 2.5 && !$0.illness })
+        // after a noisy morning the baseline leaves it out
+        XCTAssertTrue(zip(fx.assessments, fx.assessments.dropFirst()).contains { $0.low_confidence && $1.baseline_n == $0.baseline_n })
+        // … and the 0–10 indices: clipped at both ends, and Stress present on a day without SD2 (resting HR alone)
         XCTAssertTrue(fx.assessments.contains { $0.regeneration == 0 } && fx.assessments.contains { $0.stress == 10 })
-        XCTAssertTrue(zip(fx.records, fx.assessments).contains { $0.sd1 == nil && $1.regeneration != nil })
+        XCTAssertTrue(zip(fx.records, fx.assessments).contains { $0.sd2 == nil && $1.stress != nil })
+        // Regeneration is the HRV z-score itself
+        for a in fx.assessments where a.z_hrv != nil { assertOptional(a.z_regeneration, a.z_hrv) }
+        // a 7-day average below range with only two mornings in its window does not flag fatigue
+        XCTAssertTrue(fx.assessments.contains { a in
+            guard let week = a.ln_week, let m = a.ln_mean, let sd = a.ln_sd else { return false }
+            return week < m - 0.5 * sd && a.week_n < Readiness.weekMinDays && a.status == "ready"
+        })
+    }
+
+    func testRegenerationAndStressComposition() throws {
+        let start = try XCTUnwrap(Self.fmt.date(from: "2026-09-01 07:00"))
+        func day(_ i: Int, ln: Double, hr: Double, sd2: Double?) -> DayRecord {
+            DayRecord(when: Readiness.calendar.date(byAdding: .day, value: i, to: start)!, lnRMSSD: ln, rmssd: exp(ln),
+                      meanHR: hr, sdnn: 60, beats: 120, artefactPct: 2, meanRR: 60000 / hr, sd1: 40, sd2: sd2, stressIndex: 100)
+        }
+        var records: [DayRecord] = []
+        for i in 0..<30 {
+            let w = Double((i * 7) % 5 - 2), v = Double((i * 3) % 5 - 2)
+            records.append(day(i, ln: 4.0 + w * 0.04, hr: 52 + v * 0.8, sd2: 80 - w * 3))
+        }
+        records.append(day(30, ln: 3.7, hr: 58, sd2: 60))
+        let a = Readiness.assess(records)
+        let hist = Array(records.dropLast())
+        let hrs: [Double] = hist.map { $0.meanHR }
+        let zHR = (58 - Stats.mean(hrs)) / max(Stats.stdev(hrs), Readiness.hrSDFloor)
+        let lnSD2 = hist.map { log($0.sd2!) }
+        let zSD2 = (log(60.0) - Stats.mean(lnSD2)) / max(Stats.stdev(lnSD2), Readiness.lnSD2SDFloor)
+        XCTAssertClose(try XCTUnwrap(a.zStress), 2.0 / 3.0 * zHR - 1.0 / 3.0 * zSD2)
+        XCTAssertClose(try XCTUnwrap(a.zRegeneration), try XCTUnwrap(a.zHRV))
+        // without SD2 today, Stress is resting HR alone
+        records[30] = day(30, ln: 3.7, hr: 58, sd2: nil)
+        XCTAssertClose(try XCTUnwrap(Readiness.assess(records).zStress), zHR)
+    }
+
+    func testIllnessNotesNameOtherCauses() throws {
+        let fx = try Fixtures.load("readiness", as: Fixture.self)
+        let records = try fx.records.map { try $0.record(Self.fmt) }
+        let notes = Readiness.assessAll(records).flatMap(\.notes)
+        XCTAssertTrue(notes.contains { $0.contains("one to three days before a cold or other infection, but alcohol, poor sleep, travel and stress produce it too") })
+        XCTAssertTrue(notes.contains { $0.contains("far outside your usual range. Infection, alcohol, poor sleep, travel, heavy stress or a late meal can all do this.") })
+    }
+
+    func testIllnessStreakIsLinearAndUncapped() throws {
+        let start = try XCTUnwrap(Self.fmt.date(from: "2026-09-01 07:00"))
+        var records: [DayRecord] = []
+        for i in 0..<60 {
+            let ill = i >= 46
+            let ln = ill ? 3.8 : 4.0 + Double((i * 7) % 5 - 2) * 0.04
+            let hr = ill ? 60.0 : 52.0 + Double((i * 3) % 5 - 2) * 0.8
+            records.append(DayRecord(when: Readiness.calendar.date(byAdding: .day, value: i, to: start)!, lnRMSSD: ln,
+                                     rmssd: 55, meanHR: hr, sdnn: 60, beats: 120, artefactPct: 2))
+        }
+        let begin = Date()
+        let all = Readiness.assessAll(records)
+        XCTAssertLessThan(Date().timeIntervalSince(begin), 1.0)
+        XCTAssertEqual(all.last?.illnessStreak, 14)
+        // a day without a measurement ends the streak
+        var gap = records
+        gap.remove(at: 55)
+        XCTAssertEqual(Readiness.assess(gap).illnessStreak, 4)
     }
 
     func testRangesDerivedFromBaseline() throws {

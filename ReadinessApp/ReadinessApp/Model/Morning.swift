@@ -41,9 +41,14 @@ final class Morning {
     var sd1: Double? = nil
     var sd2: Double? = nil
     var stressIndex: Double? = nil
+    /// Indices i of `rrMs` whose interval directly follows a rejected one (`RRBuffer.breaks`): rrMs[i] − rrMs[i−1]
+    /// spans a removed beat and is left out of RMSSD, pNN50 and SD1. Empty for imported rows and clean mornings;
+    /// mornings stored before it existed are filled in by `backfillBreaks()`.
+    var breakIndices: [Int] = []
 
     init(date: Date, metrics m: HRVMetrics, spectral sp: SpectralMetrics?, settleS: Double,
-         rrMs: [Double], beatTimes: [Double], allRR: [Double], allElapsed: [Double], source: String, deviceName: String) {
+         rrMs: [Double], beatTimes: [Double], allRR: [Double], allElapsed: [Double], breakIndices: [Int] = [],
+         source: String, deviceName: String) {
         id = UUID()
         self.date = date
         durationS = m.durationS
@@ -66,17 +71,40 @@ final class Morning {
         self.beatTimes = beatTimes
         self.allRR = allRR
         self.allElapsed = allElapsed
+        self.breakIndices = breakIndices
         self.source = source
         self.deviceName = deviceName
         fillBeatDerived()
     }
 
-    /// Compute SD1/SD2 and the stress index from the stored beats.
+    /// Compute SD1/SD2 (skipping differences across rejected beats) and the stress index from the stored beats.
     func fillBeatDerived() {
-        let pc = poincare(rr: rrMs)
+        let pc = poincare(rr: rrMs, breaks: breakIndices)
         sd1 = pc?.sd1
         sd2 = pc?.sd2
         stressIndex = HRVCore.stressIndex(rr: rrMs)
+    }
+
+    /// The artefact filter re-run over every received interval of the measurement window, as
+    /// `MeasurementSession` fed it (intervals from the end of the settle phase on). nil without raw intervals.
+    func refilter() -> RRBuffer? {
+        guard !allRR.isEmpty else { return nil }
+        let buffer = RRBuffer()
+        for (t, rr) in zip(allElapsed, allRR) where t >= settleS { buffer.add(rr, at: t) }
+        return buffer
+    }
+
+    /// For mornings stored before `breakIndices` existed: recover them by re-running the filter, then recompute
+    /// SD1/SD2. Only when the re-run rejects beats and reproduces the stored beats exactly, so clean mornings (and
+    /// ones filtered by an older rule) are left untouched. RMSSD and the verdict inputs stay as stored.
+    /// Returns true when the morning changed.
+    @discardableResult
+    func backfillBreaks() -> Bool {
+        guard breakIndices.isEmpty, let buffer = refilter(), buffer.artefacts > 0, !buffer.breaks.isEmpty,
+              buffer.values == rrMs else { return false }
+        breakIndices = buffer.breaks
+        fillBeatDerived()
+        return true
     }
 
     /// From a `readiness.csv` row written by the Mac tool or exported by this app.

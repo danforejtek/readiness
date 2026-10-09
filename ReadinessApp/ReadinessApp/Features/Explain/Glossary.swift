@@ -38,9 +38,9 @@ enum Metric: String, CaseIterable, Identifiable {
         case .restingHR:
             return "Average heart rate over the measurement. A rise of several beats per minute over your normal is one of the earliest signs of illness, stress or fatigue, often before you feel it."
         case .weekAverage:
-            return "Average lnRMSSD over the last seven days, today included. A single low day is normal noise; a week below your range shows fatigue that has been building up."
+            return "Average lnRMSSD over the last seven days, today included. A single low day is normal noise; a week below your range shows fatigue that has been building up. It only counts towards the verdict once at least 3 mornings fall in the seven days."
         case .quality:
-            return "Share of intervals the filter rejected: values below 300 ms or above 2000 ms, or jumps of more than 20 % from the recent beats. Movement and a loose band cause them. Above 15 %, or fewer than 60 clean beats, the verdict is marked low confidence."
+            return "Share of intervals the filter rejected: values below 300 ms or above 2000 ms, or jumps of more than 20 % from the recent beats. Movement and a loose band cause them. After five consecutive consistent beats at a new level the filter re-synchronises: those five still count as rejected, and beats are accepted again from the sixth onwards, so a genuine change of heart rate during the measurement is not rejected for the rest of it. The difference between the beats on either side of a rejected one is left out of RMSSD, pNN50 and SD1, because it is not a real beat-to-beat change. Above 15 %, or fewer than 60 clean beats, the verdict is marked low confidence."
         case .sdnn:
             return "Standard deviation of all intervals between beats. It mixes beat-to-beat and slower changes, so it depends more on breathing and posture than RMSSD. Apple Health stores HRV as SDNN."
         case .pnn50:
@@ -48,23 +48,23 @@ enum Metric: String, CaseIterable, Identifiable {
         case .meanRR:
             return "Average time between two beats. 1000 ms equals 60 beats per minute."
         case .sd1sd2:
-            return "From the Poincaré plot, where every beat is plotted against the next. SD1 is the width of the cloud across the diagonal, the fast beat-to-beat variation, about RMSSD divided by √2. SD2 is its length along the diagonal, the slower variation."
+            return "From the Poincaré plot, where every beat is plotted against the next. SD1 is the width of the cloud across the diagonal, the fast beat-to-beat variation. It is RMSSD divided by √2, so it tells the same story as RMSSD and the app does not count it twice. SD2 is the length of the cloud along the diagonal, the slower variation; it makes up a third of the Stress number. Pairs of beats on either side of a rejected beat are left out."
         case .hf:
             return "Variation at breathing speed, 0.15–0.40 Hz or 9–24 breaths a minute. Your heart speeds up slightly when you breathe in and slows when you breathe out. It follows RMSSD closely."
         case .lf:
-            return "Slower variation, 0.04–0.15 Hz, mainly from blood-pressure regulation. Breathing slower than 9 breaths a minute also lands here."
+            return "Slower variation, 0.04–0.15 Hz, mainly from blood-pressure regulation. Breathing slower than 9 breaths a minute also lands here. A 2-minute recording holds only about five cycles of this band, so the value is indicative only and the verdict does not use it."
         case .lfHf:
-            return "Ratio of slow to breathing-speed variation. It is often called a stress balance, but it shifts strongly with how you breathe, so the verdict does not use it."
+            return "Ratio of slow to breathing-speed variation. It is often called a stress balance, but it shifts strongly with how you breathe: breathing slower than 9 breaths a minute pushes it up on its own. A 2-minute recording also holds only about five cycles of the LF band, so it is indicative only and the verdict does not use it."
         case .breathing:
-            return "Estimated from the peak of the HF band. It is a check on the measurement: a morning with unusually fast or slow breathing is less comparable to the others."
+            return "Estimated from the strongest peak of the spectrum between 6 and 30 breaths a minute (0.10–0.50 Hz), so slow breathing below the HF band is found too. The search also stops below half your heart rate (25 breaths a minute at 50 bpm), the fastest rhythm a once-per-beat signal can show. When there is no clear peak it is left empty. It is a check on the measurement: a morning with unusually fast or slow breathing is less comparable to the others."
         case .regeneration:
-            return "How strongly the calming, recovering branch of your nervous system is working this morning, from 0 to 10. 5 is your normal and 4–6 your normal range; higher means better recovered than usual. It combines mean RR (a slower heart), RMSSD and SD1 (more beat-to-beat variation), each compared with your own last 60 days."
+            return "Your HRV (lnRMSSD) this morning against your own normal of the last 60 days, from 0 to 10. 5 is your normal, 4–6 your normal range (half a standard deviation either way), and 2 points are one standard deviation. Higher means more beat-to-beat variation than usual, which usually means you are well recovered."
         case .stress:
-            return "How active the fight-or-flight branch of your nervous system is this morning, from 0 to 10. 5 is your normal and 4–6 your normal range; higher means more strain than usual. It combines resting HR, the stress index and SD2 (less slow variation counts as more stress), each compared with your own last 60 days."
+            return "Strain or load on your body this morning against your own normal of the last 60 days, from 0 to 10. 5 is your normal, 4–6 your normal range (half a standard deviation either way), and 2 points are one standard deviation; higher means more strain than usual. Two thirds come from resting HR. One third comes from SD2, the slower variation, where less counts as more strain, following the Stress Score of Naranjo Orellana and colleagues. Mornings without SD2 use resting HR alone. Illness, alcohol, poor sleep, hard training and worry all raise it; no heart measurement this short can tell them apart."
         case .stressIndex:
-            return "Baevsky's stress index. The intervals between beats are sorted into 50 ms bins; when most beats land in one narrow bin, the rhythm is rigid and the index is high. Resting values differ widely between people, from about 30 to several hundred, so the app only compares it with your own mornings. Needs at least 30 clean beats."
+            return "Baevsky's stress index. The intervals between beats are sorted into 50 ms bins; when most beats land in one narrow bin, the rhythm is rigid and the index is high. Resting values differ widely between people, from about 30 to several hundred. It is shown for reference only: it mostly repeats resting HR and SD2, so the Stress number does not use it. Needs at least 30 clean beats."
         case .score:
-            return "75 is a normal day for you. HRV one standard deviation above your normal adds about 10 points; resting HR one standard deviation above takes about 5 off. The verdict colour comes from the rules in “How the verdict works”, not from the score alone."
+            return "75 is a normal day for you. HRV one standard deviation above your normal adds about 10 points; resting HR one standard deviation above takes about 5 off. The 0.65/0.35 weights and the 75 ± 15 scaling are this app's design choice, not part of a published method. The verdict colour comes from the rules in “How the verdict works”, not from the score alone."
         }
     }
 }

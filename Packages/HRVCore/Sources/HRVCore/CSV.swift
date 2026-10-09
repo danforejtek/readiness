@@ -90,7 +90,7 @@ public enum ReadinessCSV {
             "sdnn_ms": s(m.sdnn, 1), "pnn50_pct": s(m.pnn50, 1), "artefact_pct": s(m.artefactPct, 1), "quality": quality,
             "lf_ms2": sp.map { s($0.lfMs2, 0) } ?? "", "hf_ms2": sp.map { s($0.hfMs2, 0) } ?? "",
             "lf_hf": sp.flatMap { $0.lfHf.isFinite ? s($0.lfHf, 2) : nil } ?? "",
-            "breathing_bpm": sp.map { s($0.breathingRateBpm, 1) } ?? "", "settle_s": s(settleS, 0),
+            "breathing_bpm": sp?.breathingRateBpm.map { s($0, 1) } ?? "", "settle_s": s(settleS, 0),
             "sd1_ms": pc.map { s($0.sd1, 1) } ?? "", "sd2_ms": pc.map { s($0.sd2, 1) } ?? "",
             "stress_index": si.map { s($0, 1) } ?? "",
         ]

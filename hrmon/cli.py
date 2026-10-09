@@ -17,7 +17,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from . import ble
+from . import ble, protocol
 from .hrv import RRBuffer, poincare, stress_index
 from .log import SessionLogger, append_readiness, read_readiness
 from .readiness import BASELINE, MODERATE, READY, REST, TAGS, Assessment, assess_all, records_from_rows
@@ -106,7 +106,9 @@ class Session:
             self.logger.log(el, s.hr, None, s.contact, battery)
 
 
-def _render(sess: Session, title: str, remaining: Optional[float] = None) -> Panel:
+def _render(sess: Session, title: str, remaining: Optional[float] = None,
+            beats_needed: Optional[int] = None) -> Panel:
+    """`beats_needed` is set while a measurement runs past its nominal duration to collect clean beats."""
     win = sess.buffer.metrics(sess.window_s)
     tot = sess.buffer.metrics()
     client = sess.client
@@ -136,7 +138,11 @@ def _render(sess: Session, title: str, remaining: Optional[float] = None) -> Pan
         phase = f"settling {_mmss(sess.settle_s - sess.elapsed())}"
     else:
         phase = _mmss(max(0.0, sess.elapsed() - sess.settle_s))
-        if remaining is not None:
+        if beats_needed is not None:
+            phase += f"   extending · {beats_needed} more clean beats"
+            if remaining is not None:
+                phase += f" (at most {_mmss(remaining)})"
+        elif remaining is not None:
             phase += f"   remaining {_mmss(remaining)}"
     t.add_row("Elapsed", phase)
 
@@ -153,16 +159,21 @@ def _render(sess: Session, title: str, remaining: Optional[float] = None) -> Pan
     return Panel(Group(*parts), title=title, border_style="red" if not stale else "dim")
 
 
-def _status_line(sess: Session) -> str:
+def _status_line(sess: Session, beats_needed: Optional[int] = None) -> str:
     win = sess.buffer.metrics(sess.window_s)
-    return (f"{_mmss(sess.elapsed())}  HR {_fmt(sess.hr):>3} bpm  RR {_fmt(sess.last_rr):>4} ms  "
+    line = (f"{_mmss(sess.elapsed())}  HR {_fmt(sess.hr):>3} bpm  RR {_fmt(sess.last_rr):>4} ms  "
             f"RMSSD({int(sess.window_s)}s) {_fmt(win.rmssd if win else None, 1):>5} ms  "
             f"beats {sess.beats}  artefacts {sess.buffer.artefacts}  "
             f"batt {_fmt(sess.client.battery if sess.client else None)} %")
+    if beats_needed is not None:
+        line += f"  extending · {beats_needed} more clean beats"
+    return line
 
 
 async def _run_session(args, duration: Optional[float], settle: float, title: str,
-                       on_finish: Callable[[Session], None]) -> None:
+                       on_finish: Callable[[Session], None], extend: bool = False) -> None:
+    """Run until `duration` s after the settle phase (or Ctrl-C). With `extend`, a measurement that has fewer
+    than `protocol.MIN_CLEAN_BEATS` clean beats at that point keeps going for up to `protocol.MAX_EXTENSION_S` s."""
     saved = ble.load_saved_device() or {}
     address = args.address or saved.get("address")
     name = args.name or saved.get("name")
@@ -184,19 +195,37 @@ async def _run_session(args, duration: Optional[float], settle: float, title: st
     runner = asyncio.create_task(client.run(stop))
     console.print(f"Logging to [bold]{logger.path}[/]  (Ctrl-C to stop)")
 
+    def measured() -> float:
+        return sess.elapsed() - settle
+
     def done() -> bool:
-        return total is not None and sess.t0 is not None and sess.elapsed() >= total
+        if total is None or sess.t0 is None:
+            return False
+        if not extend:
+            return sess.elapsed() >= total
+        return protocol.measurement_done(measured(), duration, len(sess.buffer.values))
+
+    def beats_needed() -> Optional[int]:
+        """Clean beats still missing while the measurement is being extended, else None."""
+        if not extend or total is None or sess.t0 is None:
+            return None
+        clean = len(sess.buffer.values)
+        return protocol.beats_needed(clean) if protocol.extending(measured(), duration, clean) else None
 
     def remaining() -> Optional[float]:
         if total is None:
             return None
-        return max(0.0, total - sess.elapsed()) if not sess.settling else duration
+        if sess.settling:
+            return duration
+        if beats_needed() is not None:
+            return max(0.0, total + protocol.MAX_EXTENSION_S - sess.elapsed())
+        return max(0.0, total - sess.elapsed())
 
     try:
         if console.is_terminal:
             with Live(_render(sess, title), console=console, refresh_per_second=2) as live:
                 while not stop.is_set() and not done():
-                    live.update(_render(sess, title, remaining()))
+                    live.update(_render(sess, title, remaining(), beats_needed()))
                     try:
                         await asyncio.wait_for(stop.wait(), timeout=0.25)
                     except asyncio.TimeoutError:
@@ -209,7 +238,7 @@ async def _run_session(args, duration: Optional[float], settle: float, title: st
                     console.print(sess.status, markup=False, highlight=False)
                     last_status = sess.status
                 if sess.t0 is not None:
-                    console.print(_status_line(sess), markup=False, highlight=False)
+                    console.print(_status_line(sess, beats_needed()), markup=False, highlight=False)
                 try:
                     await asyncio.wait_for(stop.wait(), timeout=2.0)
                 except asyncio.TimeoutError:
@@ -232,8 +261,9 @@ def _finish_monitor(sess: Session) -> None:
                       f"RMSSD {m.rmssd:.1f} ms, SDNN {m.sdnn:.1f} ms, artefacts {m.artefact_pct:.0f} %")
     sp = sess.buffer.spectral()
     if sp:
-        console.print(f"Spectral: LF {sp.lf_ms2:.0f} ms², HF {sp.hf_ms2:.0f} ms², LF/HF {sp.lf_hf:.2f}, "
-                      f"breathing ≈ {sp.breathing_rate_bpm:.0f}/min")
+        breathing = (f", breathing ≈ {sp.breathing_rate_bpm:.0f}/min"
+                     if sp.breathing_rate_bpm is not None else ", breathing not resolved")
+        console.print(f"Spectral: LF {sp.lf_ms2:.0f} ms², HF {sp.hf_ms2:.0f} ms², LF/HF {sp.lf_hf:.2f}{breathing}")
 
 
 def _finish_measure(sess: Session) -> None:
@@ -244,7 +274,7 @@ def _finish_measure(sess: Session) -> None:
                       "Check that the sensor sits snugly with good skin contact and try again.[/]")
         return
     sp = sess.buffer.spectral()
-    pc = poincare(sess.buffer.values)
+    pc = poincare(sess.buffer.values, sess.buffer.breaks)
     si = stress_index(sess.buffer.values)
     quality = "good" if m.artefact_pct < 5 else "fair" if m.artefact_pct < 15 else "poor"
     row = {
@@ -262,7 +292,7 @@ def _finish_measure(sess: Session) -> None:
         "lf_ms2": f"{sp.lf_ms2:.0f}" if sp else "",
         "hf_ms2": f"{sp.hf_ms2:.0f}" if sp else "",
         "lf_hf": f"{sp.lf_hf:.2f}" if sp and sp.lf_hf != float("inf") else "",
-        "breathing_bpm": f"{sp.breathing_rate_bpm:.1f}" if sp else "",
+        "breathing_bpm": f"{sp.breathing_rate_bpm:.1f}" if sp and sp.breathing_rate_bpm is not None else "",
         "settle_s": f"{sess.settle_s:.0f}",
         "feeling": str(sess.feeling) if sess.feeling else "",
         "tags": ";".join(sess.tags),
@@ -285,7 +315,8 @@ def _finish_measure(sess: Session) -> None:
     if sp:
         table.add_row("LF / HF power", f"{sp.lf_ms2:.0f} / {sp.hf_ms2:.0f} ms²")
         table.add_row("LF/HF ratio", f"{sp.lf_hf:.2f}  (LF {sp.lf_nu:.0f} nu)")
-        table.add_row("Breathing (from HF peak)", f"≈ {sp.breathing_rate_bpm:.0f} /min")
+        table.add_row("Breathing (spectral peak)",
+                      f"≈ {sp.breathing_rate_bpm:.0f} /min" if sp.breathing_rate_bpm is not None else "no clear peak")
     if pc:
         table.add_row("Poincaré SD1 / SD2", f"{pc[0]:.1f} / {pc[1]:.1f} ms")
     if si is not None:
@@ -428,9 +459,12 @@ async def cmd_measure(args) -> int:
         "Do this right after waking, before coffee, phone or getting up.\n"
         "Lie still on your back, breathe normally, heart-rate sensor on with good skin contact.\n"
         f"{_mmss(args.settle)} to settle, then {_mmss(args.duration)} of measurement; "
-        "the clock starts with the first heartbeat received.",
+        "the clock starts with the first heartbeat received.\n"
+        f"If fewer than {protocol.MIN_CLEAN_BEATS} clean beats are in by then (too many rejected), "
+        f"it keeps measuring for up to {protocol.MAX_EXTENSION_S:.0f} s more.",
         title="Morning readiness measurement", border_style="cyan"))
-    await _run_session(args, args.duration, args.settle, "hrmon · morning measurement", _finish_measure)
+    await _run_session(args, args.duration, args.settle, "hrmon · morning measurement", _finish_measure,
+                       extend=True)
     return 0
 
 
@@ -497,9 +531,13 @@ def main(argv: Optional[list[str]] = None) -> None:
     m.add_argument("--window", type=float, default=60.0, help="rolling window for live RMSSD, seconds")
     m.set_defaults(func=cmd_monitor)
 
-    e = sub.add_parser("measure", help="morning readiness measurement (15 s settle + 120 s), then the verdict")
-    e.add_argument("--duration", type=float, default=120.0, help="measurement seconds (default 120)")
-    e.add_argument("--settle", type=float, default=15.0, help="seconds discarded at the start (default 15)")
+    e = sub.add_parser("measure", help=f"morning readiness measurement ({protocol.SETTLE_S:.0f} s settle + "
+                       f"{protocol.DURATION_S:.0f} s, extended when too many beats are rejected), then the verdict")
+    e.add_argument("--duration", type=float, default=protocol.DURATION_S,
+                   help=f"nominal measurement seconds (default {protocol.DURATION_S:.0f}); extended by up to "
+                        f"{protocol.MAX_EXTENSION_S:.0f} s while fewer than {protocol.MIN_CLEAN_BEATS} clean beats are in")
+    e.add_argument("--settle", type=float, default=protocol.SETTLE_S,
+                   help=f"seconds discarded at the start (default {protocol.SETTLE_S:.0f})")
     e.add_argument("--out", help="CSV path (default sessions/<timestamp>.csv)")
     e.add_argument("--window", type=float, default=60.0, help="rolling window for live RMSSD, seconds")
     e.add_argument("--feeling", type=int, choices=range(1, 6), metavar="1-5",

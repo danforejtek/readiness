@@ -1,11 +1,14 @@
 import csv
+import math
+import statistics
 import tempfile
+import time
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from hrmon.log import append_readiness, read_readiness
-from hrmon.readiness import (BASELINE, MODERATE, READY, REST, DayRecord, Params, ans_z, assess,
+from hrmon.readiness import (BASELINE, MODERATE, READY, REST, DayRecord, Params, ans_z, assess, assess_all,
                              records_from_rows, scale_index)
 
 
@@ -74,7 +77,9 @@ class ReadinessTests(unittest.TestCase):
         a = assess(recs)
         self.assertTrue(a.illness)
         self.assertEqual(a.status, REST)
-        self.assertTrue(any("infection" in n for n in a.notes))
+        self.assertTrue(any("one to three days before a cold or other infection" in n for n in a.notes))
+        # the same pattern has other causes, and the note says so
+        self.assertTrue(any("alcohol, poor sleep, travel and stress produce it too" in n for n in a.notes))
 
     def test_illness_by_heart_rate_alone_does_not_claim_low_hrv(self):
         recs = add_day(make_history(), ln=4.02, hr=61.0)   # HRV normal, HR +9 bpm
@@ -83,6 +88,17 @@ class ReadinessTests(unittest.TestCase):
         self.assertGreater(a.z_hrv, -1.0)
         self.assertFalse(any("HRV is below" in n for n in a.notes))
         self.assertTrue(any("far outside your usual range" in n for n in a.notes))
+        self.assertTrue(any("Infection, alcohol, poor sleep, travel, heavy stress or a late meal" in n for n in a.notes))
+
+    def test_illness_by_heart_rate_alone_needs_four_bpm(self):
+        # the HR SD here is below the 1.5 bpm floor, so +3.8 bpm is z ≈ 2.5 but not 4 bpm above normal
+        recs = make_history()
+        hr_mean = sum(r.mean_hr for r in recs) / len(recs)
+        a = assess(add_day(recs, ln=4.0, hr=hr_mean + 3.8))
+        self.assertEqual(a.hr_sd, 1.5)
+        self.assertGreaterEqual(a.z_hr, 2.5)
+        self.assertFalse(a.illness)
+        self.assertEqual(a.status, REST)            # still far off: HR z ≥ 1.5
 
     def test_rest_note_does_not_say_below_when_hr_is_the_cause(self):
         recs = add_day(make_history(), ln=4.0, hr=55.0)    # HRV on baseline, HR clearly up but not illness
@@ -96,6 +112,35 @@ class ReadinessTests(unittest.TestCase):
         self.assertTrue(a.illness)
         self.assertEqual(a.illness_streak, 2)
 
+    def test_illness_streak_has_no_cap(self):
+        recs = make_history()
+        for _ in range(6):
+            recs = add_day(recs, ln=3.80, hr=60.0)
+        a = assess(recs)
+        self.assertEqual(a.illness_streak, 6)
+        self.assertTrue(any("for 6 days in a row" in n for n in a.notes))
+
+    def test_gap_day_breaks_illness_streak(self):
+        recs = add_day(make_history(), ln=3.80, hr=60.0)
+        when = recs[-1].when + timedelta(days=2)             # one day not measured
+        recs.append(DayRecord(day=when.date(), when=when, ln_rmssd=3.78, rmssd=55.0, mean_hr=61.0,
+                              sdnn=60.0, beats=120, artefact_pct=2.0))
+        a = assess(recs)
+        self.assertTrue(a.illness)
+        self.assertTrue(assess(recs, len(recs) - 2).illness)
+        self.assertEqual(a.illness_streak, 1)
+
+    def test_long_illness_streak_stays_fast(self):
+        # the streak used to recurse through assess(); 14 flagged days in a row took thousands of calls
+        recs = make_history(46)
+        for _ in range(14):
+            recs = add_day(recs, ln=3.80, hr=60.0)
+        start = time.perf_counter()
+        out = assess_all(recs)
+        self.assertLess(time.perf_counter() - start, 0.5)
+        self.assertEqual(len(out), 60)
+        self.assertEqual(out[-1].illness_streak, 14)
+
     def test_weekly_average_below_range_flags_fatigue(self):
         recs = make_history(30)
         for _ in range(6):
@@ -104,10 +149,61 @@ class ReadinessTests(unittest.TestCase):
         self.assertIn(a.status, (MODERATE, REST))
         self.assertTrue(any("7-day" in n for n in a.notes))
 
+    def test_weekly_average_needs_three_mornings(self):
+        # after a week without measurements, one very low morning and a normal one: the 7-day average of those
+        # two is below range, but two mornings are too few to call it a trend
+        recs = make_history(30)
+        when = recs[-1].when + timedelta(days=8)
+        recs.append(DayRecord(day=when.date(), when=when, ln_rmssd=3.80, rmssd=55.0, mean_hr=52.0, sdnn=60.0,
+                              beats=120, artefact_pct=2.0))
+        recs = add_day(recs, ln=3.99, hr=52.0)
+        a = assess(recs)
+        lo, _ = a.ln_range
+        self.assertAlmostEqual(a.ln_week, (3.80 + 3.99) / 2)     # still computed and shown
+        self.assertEqual(a.week_n, 2)
+        self.assertLess(a.ln_week, lo)
+        self.assertGreater(a.z_hrv, -0.5)
+        self.assertEqual(a.status, READY)
+        self.assertFalse(any("7-day" in n for n in a.notes))
+        # the third morning makes it count
+        a = assess(add_day(recs, ln=3.99, hr=52.0))
+        self.assertLess(a.ln_week, a.ln_range[0])
+        self.assertGreater(a.z_hrv, -0.5)
+        self.assertEqual(a.status, MODERATE)
+        self.assertTrue(any("7-day" in n for n in a.notes))
+        self.assertEqual(Params().week_min_days, 3)
+
     def test_low_quality_flagged(self):
         recs = add_day(make_history(), ln=4.0, hr=52.0, beats=40, artefacts=25.0)
         a = assess(recs)
         self.assertTrue(a.low_confidence)
+        self.assertIsNotNone(a.score)                  # a noisy morning still gets a verdict
+
+    def test_noisy_morning_stays_out_of_the_baseline(self):
+        clean = add_day(make_history(), ln=4.0, hr=52.0)
+        noisy = make_history()
+        add_day(noisy, ln=4.8, hr=48.0, beats=45, artefacts=30.0)    # inflated lnRMSSD from artefacts
+        noisy = add_day(noisy, ln=4.0, hr=52.0)
+        a, b = assess(clean), assess(noisy)
+        self.assertEqual(b.baseline_n, 20)
+        self.assertEqual((b.ln_mean, b.ln_sd, b.hr_mean, b.hr_sd), (a.ln_mean, a.ln_sd, a.hr_mean, a.hr_sd))
+        self.assertEqual(b.ln_range, a.ln_range)
+        # … and out of the 7-day average: today's 4.0 and the five clean days before the noisy one
+        self.assertAlmostEqual(b.ln_week, (4.0 + sum(r.ln_rmssd for r in noisy[-7:-2])) / 6)
+        # the noisy morning itself is still assessed, against the clean baseline
+        c = assess(noisy, len(noisy) - 2)
+        self.assertTrue(c.low_confidence)
+        self.assertEqual(c.baseline_n, 20)
+        self.assertAlmostEqual(c.ln_week, (4.8 + sum(r.ln_rmssd for r in noisy[-8:-2])) / 7)
+
+    def test_noisy_mornings_count_while_clean_ones_are_too_few(self):
+        recs = make_history(10)
+        for r in recs[:5]:
+            r.beats, r.artefact_pct = 40, 25.0                       # only 5 clean mornings: fall back to all
+        a = assess(add_day(recs, ln=4.0, hr=52.0))
+        self.assertEqual(a.baseline_n, 10)
+        self.assertAlmostEqual(a.ln_mean, sum(r.ln_rmssd for r in recs[:-1]) / 10)
+        self.assertAlmostEqual(a.ln_week, sum(r.ln_rmssd for r in recs[-7:]) / 7)
 
     def test_regeneration_and_stress_on_a_normal_day_are_near_five(self):
         recs = with_beats(make_history(30))
@@ -125,10 +221,40 @@ class ReadinessTests(unittest.TestCase):
         a = assess(recs)
         self.assertLess(a.regeneration, 3.0)
         self.assertGreater(a.stress, 7.0)
-        # a lower SD2 alone raises Stress: SD2 enters reversed, as in Kubios' SNS index
+        # Stress = ⅔ · z(resting HR) + ⅓ · −z(ln SD2), Naranjo's Stress Score 1000/SD2 on the log scale
+        p, hist = Params(), recs[:-1]
+        z_hr = (58.0 - statistics.fmean(h.mean_hr for h in hist)) / max(statistics.stdev(h.mean_hr for h in hist), p.hr_sd_floor)
+        ln_sd2 = [math.log(h.sd2) for h in hist]
+        z_sd2 = (math.log(60.0) - statistics.fmean(ln_sd2)) / max(statistics.stdev(ln_sd2), p.ln_sd2_sd_floor)
+        self.assertAlmostEqual(a.z_stress, (2 / 3) * z_hr - (1 / 3) * z_sd2)
+        # a lower SD2 alone raises Stress
         hi, lo = with_beats(make_history(30)), with_beats(make_history(30))
         hi[-1].sd2, lo[-1].sd2 = 90.0, 60.0
         self.assertLess(ans_z(hi, len(hi) - 1)[1], ans_z(lo, len(lo) - 1)[1])
+        # mean RR, SD1 and the stress index no longer enter either index
+        other = with_beats(make_history(30))
+        other[-1].mean_rr, other[-1].sd1, other[-1].stress_index = 2000.0, 90.0, 900.0
+        self.assertEqual(ans_z(other, len(other) - 1), ans_z(with_beats(make_history(30)), 29))
+
+    def test_regeneration_is_the_hrv_z_score(self):
+        recs = with_beats(add_day(make_history(30), ln=3.9, hr=53.0))
+        a = assess(recs)
+        self.assertAlmostEqual(a.z_regeneration, a.z_hrv)
+        self.assertEqual(a.regeneration, scale_index(a.z_hrv))
+
+    def test_regeneration_and_stress_use_the_clean_baseline(self):
+        # a noisy morning with inflated HRV stays out of the Regeneration / Stress baseline, as out of the verdict's
+        clean = with_beats(add_day(make_history(20), ln=4.0, hr=52.0))
+        noisy = make_history(20)
+        add_day(noisy, ln=4.8, hr=48.0, beats=45, artefacts=30.0)
+        noisy = with_beats(add_day(noisy, ln=4.0, hr=52.0))
+        # same beat-derived values on the shared days
+        for c, n in zip(clean[:20], noisy[:20]):
+            self.assertEqual((c.sd2, c.mean_hr), (n.sd2, n.mean_hr))
+        noisy[-1].sd2 = clean[-1].sd2
+        a, b = assess(clean), assess(noisy)
+        self.assertAlmostEqual(b.z_regeneration, a.z_regeneration)
+        self.assertAlmostEqual(b.z_stress, a.z_stress)
 
     def test_scale_clips_to_zero_and_ten(self):
         self.assertEqual(scale_index(0.0), 5.0)
@@ -139,25 +265,26 @@ class ReadinessTests(unittest.TestCase):
         self.assertEqual(scale_index(1.0, Params(index_scale=1.0)), 6.0)
 
     def test_missing_components_fall_back_to_the_available_ones(self):
-        # old Mac rows: no beats, so no mean RR / SD1 / SD2 / stress index; RMSSD and mean HR still count
+        # old Mac rows: no beats, so no SD2; Stress is then resting HR alone, Regeneration is lnRMSSD as always
         recs = make_history(30)
         z_regen, z_stress = ans_z(recs, len(recs) - 1)
         p = Params()
         hist = recs[:-1]
         mean_hr = sum(r.mean_hr for r in hist) / len(hist)
-        import statistics
         sd_hr = max(statistics.stdev(r.mean_hr for r in hist), p.hr_sd_floor)
         self.assertAlmostEqual(z_stress, (recs[-1].mean_hr - mean_hr) / sd_hr)
-        self.assertAlmostEqual(z_regen, 0.0)   # RMSSD constant in the history -> on the mean
+        ln = [r.ln_rmssd for r in hist]
+        self.assertAlmostEqual(z_regen, (recs[-1].ln_rmssd - statistics.fmean(ln)) / max(statistics.stdev(ln), p.ln_sd_floor))
         # a component only counts once 7 baseline days have it: SD2 on the last 3 days only is ignored
         for r in recs[-3:]:
             r.sd2 = 50.0
         self.assertAlmostEqual(ans_z(recs, len(recs) - 1)[1], z_stress)
-        # nothing at all -> None
+        # no resting HR -> no Stress; Regeneration only needs lnRMSSD
         bare = [DayRecord(day=r.day, when=r.when, ln_rmssd=r.ln_rmssd, rmssd=0.0, mean_hr=0.0, sdnn=0.0,
                           beats=0, artefact_pct=0.0) for r in recs]
-        self.assertEqual(ans_z(bare, len(bare) - 1), (None, None))
-        self.assertIsNone(assess(bare).regeneration)
+        self.assertIsNone(ans_z(bare, len(bare) - 1)[1])
+        self.assertAlmostEqual(ans_z(bare, len(bare) - 1)[0], z_regen)
+        self.assertIsNone(assess(bare).stress)
 
     def test_short_baseline_gives_no_regeneration_or_stress(self):
         recs = with_beats(make_history(7))      # today + 6 earlier mornings
@@ -172,11 +299,12 @@ class ReadinessTests(unittest.TestCase):
     def test_comparisons_vs_average_and_last(self):
         recs = with_beats(make_history(30))
         recs = add_day(recs, ln=4.2, hr=50.0)
-        recs[-1].mean_rr, recs[-1].sd1, recs[-1].sd2, recs[-1].stress_index = 1200.0, 45.0, 80.0, 90.0
+        recs[-1].sd2 = 80.0
         a = assess(recs)
         prev = recs[-2]
-        self.assertAlmostEqual(a.ln_change.vs_average_pct, 100 * (4.2 - a.ln_mean) / a.ln_mean)
-        self.assertAlmostEqual(a.ln_change.vs_last_pct, 100 * (4.2 - prev.ln_rmssd) / prev.ln_rmssd)
+        # HRV chips are % of RMSSD, not of its log: e^Δln − 1
+        self.assertAlmostEqual(a.ln_change.vs_average_pct, 100 * (math.exp(4.2 - a.ln_mean) - 1))
+        self.assertAlmostEqual(a.ln_change.vs_last_pct, 100 * (math.exp(4.2 - prev.ln_rmssd) - 1))
         self.assertAlmostEqual(a.hr_change.vs_average_pct, 100 * (50.0 - a.hr_mean) / a.hr_mean)
         self.assertAlmostEqual(a.hr_change.vs_last_pct, 100 * (50.0 - prev.mean_hr) / prev.mean_hr)
         self.assertAlmostEqual(a.regeneration_change.vs_average_pct, 100 * (a.regeneration - 5.0) / 5.0)

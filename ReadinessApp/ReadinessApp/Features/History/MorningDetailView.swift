@@ -73,25 +73,31 @@ private struct MorningAnalysis {
 
     let beats: [Beat]
     let rejected: Int
+    /// Consecutive accepted beats (RRₙ, RRₙ₊₁), without the pairs that span a rejected beat.
     let pairs: [(x: Double, y: Double)]
     let meanRR: Double
     let poincare: Poincare?
     let spectrum: [SpecPoint]
 
     init(_ m: Morning) {
-        // Re-run the artefact filter over every received interval so rejected beats can be drawn.
+        // Re-run the artefact filter over every received interval so rejected beats can be drawn. Intervals from
+        // before the end of the settle phase (only replayed mornings store them) were never measured: drawn, not filtered.
+        var breaks = m.breakIndices
         if m.allRR.isEmpty {
             beats = zip(m.beatTimes, m.rrMs).enumerated().map { Beat(id: $0, t: $1.0 - m.settleS, rr: $1.1, accepted: true) }
         } else {
             let buffer = RRBuffer()
             beats = zip(m.allElapsed, m.allRR).enumerated().map { i, pair in
-                Beat(id: i, t: pair.0 - m.settleS, rr: pair.1, accepted: buffer.add(pair.1, at: pair.0))
+                Beat(id: i, t: pair.0 - m.settleS, rr: pair.1, accepted: pair.0 < m.settleS || buffer.add(pair.1, at: pair.0))
             }
+            // the re-run's breaks line up with the stored beats only when it reproduces them
+            if buffer.values == m.rrMs { breaks = buffer.breaks }
         }
         rejected = beats.filter { !$0.accepted }.count
-        pairs = zip(m.rrMs, m.rrMs.dropFirst()).map { (x: $0, y: $1) }
+        let skip = Set(breaks)
+        pairs = m.rrMs.indices.dropFirst().filter { !skip.contains($0) }.map { (x: m.rrMs[$0 - 1], y: m.rrMs[$0]) }
         meanRR = m.rrMs.isEmpty ? 0 : m.rrMs.reduce(0, +) / Double(m.rrMs.count)
-        poincare = HRVCore.poincare(rr: m.rrMs)
+        poincare = HRVCore.poincare(rr: m.rrMs, breaks: breaks)
         if m.rrMs.count >= 30 {
             let freqs = stride(from: 0.02, through: 0.5, by: 0.002).map { $0 }
             let psd = lombScarglePSD(t: m.beatTimes, y: m.rrMs, freqs: freqs)
@@ -199,9 +205,12 @@ private struct SpectrumCard: View {
     let morning: Morning
 
     var body: some View {
-        let peak = morning.breathingBpm.map { $0 / 60 }
+        let peak = morning.breathingBpm.flatMap { $0 > 0 ? $0 / 60 : nil }
+        let breathingText = (peak == nil
+            ? "No clear breathing peak this morning, so no breathing rate."
+            : "The dashed line marks your breathing rate.") + slowBreathingText
         Card(title: "Spectrum", info: .hf,
-             subtitle: "How the variability splits by speed. Green is breathing speed (HF \(Fmt.n(morning.hfMs2)) ms²), violet is slower regulation (LF \(Fmt.n(morning.lfMs2)) ms²). The dashed line marks your breathing rate.") {
+             subtitle: "How the variability splits by speed. Green is breathing speed (HF \(Fmt.n(morning.hfMs2)) ms²), violet is slower regulation (LF \(Fmt.n(morning.lfMs2)) ms²). \(breathingText)") {
             Chart {
                 RectangleMark(xStart: .value("f", 0.04), xEnd: .value("f", 0.15)).foregroundStyle(Palette.calm.opacity(0.12))
                 RectangleMark(xStart: .value("f", 0.15), xEnd: .value("f", 0.40)).foregroundStyle(Palette.good.opacity(0.12))
@@ -209,7 +218,7 @@ private struct SpectrumCard: View {
                     AreaMark(x: .value("Hz", s.f), y: .value("PSD", s.p)).foregroundStyle(Palette.accent.opacity(0.30))
                     LineMark(x: .value("Hz", s.f), y: .value("PSD", s.p)).foregroundStyle(Palette.accent)
                 }
-                if let peak, peak > 0 {
+                if let peak {
                     RuleMark(x: .value("Hz", peak))
                         .foregroundStyle(Palette.good).lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
                         .annotation(position: .top, alignment: .leading) {
@@ -221,6 +230,13 @@ private struct SpectrumCard: View {
             .chartXAxisLabel("Hz")
             .chartYAxisLabel("ms²/Hz")
         }
+    }
+
+    /// Below 9 breaths a minute the breathing-driven variation moves into the LF band and inflates LF/HF on its own
+    /// (Saboul 2014, docs/evidence.md section J).
+    private var slowBreathingText: String {
+        guard let bpm = morning.breathingBpm, bpm < 9 else { return "" }
+        return " Slow breathing: LF/HF is not interpretable this morning."
     }
 }
 

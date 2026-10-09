@@ -18,7 +18,8 @@ enough for personal use; 7-day re-sign, or a paid account for TestFlight).
 ## Product scope (v1)
 
 1. **Measure** – guided morning protocol identical to `hrmon measure`: connect, 15 s settle, 120 s
-   measurement, live HR and RR while it runs, result card at the end.
+   measurement (extended by up to 60 s while fewer than 80 clean beats are in), live HR and RR while it runs,
+   result card at the end.
 2. **Today** – verdict (READY / MODERATE / REST, score, illness flag), *why* in plain language, today's
    lnRMSSD and resting HR placed on your normal range, HF/LF and breathing rate.
 3. **Trends** – charts over 2 weeks / 1 month / 3 months: lnRMSSD with the normal band and 7-day average,
@@ -97,12 +98,16 @@ Key decisions:
 ## Measurement flow (state machine in `MeasureFlow`)
 
 ```
-intro ──start──▶ connecting ──first sample──▶ settling(15 s) ──▶ measuring(120 s) ──▶ result
+intro ──start──▶ connecting ──first sample──▶ settling(15 s) ──▶ measuring(120 s, +≤60 s) ──▶ result
    ▲                 │ timeout / not found                            │ disconnect
    └─────────────────┴──────── help sheet ◀────────────────────── reconnecting (clock paused)
 ```
 
 - Settle and measurement start from the first heartbeat, as in `hrmon`.
+- Auto-extension (same rule as `hrmon/protocol.py`, constants in `AppSettings.minCleanBeats` /
+  `maxExtensionS`): when the nominal time is up with fewer than 80 clean beats, keep measuring until 80 are in
+  or 60 s more have passed. The ring turns amber and shows "extending · N more clean beats". The stored
+  `durationS` is the real measured span.
 - Live view: big HR, countdown ring, RR tachogram of the last 60 s, quality hint ("hold still" when
   artefacts rise above 10 %).
 - Result: HRVCore metrics + spectral + `assess()` against stored mornings → persisted `Morning`, verdict
@@ -185,6 +190,16 @@ spectrum with LF/HF shaded, table of all metrics, notes, delete or retake.
   3 ms; mean HR reuses `hr_sd_floor`), missing components are skipped. Scale `round(clip(5 + 2z, 0, 10), 1)`.
   `Assessment` gains `regeneration`, `stress`, their z, and `Comparison(vs_average_pct, vs_last_pct)` for lnRMSSD,
   resting HR, Regeneration and Stress (Regeneration/Stress "vs average" is against 5). Notes unchanged.
+  *Superseded (October 2026, after `docs/evidence.md` sections G, H, I):* SD1 ≡ RMSSD/√2, mean RR is the
+  reciprocal of HR and √SI tracks HR and SD2, so the Kubios-style averages counted the same information twice.
+  Now Regeneration z = z(lnRMSSD) (`ln_sd_floor`); Stress z = ⅔ · z(resting HR) + ⅓ · −z(ln SD2) (Naranjo
+  Orellana 2015's Stress Score on the log scale; `stress_w_hr`, `stress_w_sd2`, `ln_sd2_sd_floor` 0.05), or
+  z(HR) alone without SD2; both use the verdict's clean-only baseline (`_baseline`). The old floors are gone.
+  Stress is described as strain / load, not sympathetic activity. In the same pass: successive differences
+  across a rejected beat are skipped by RMSSD, pNN50 and SD1 (`RRBuffer.breaks`, `Morning.breakIndices`,
+  recovered at launch for stored mornings by re-running the filter; section F), the 7-day average needs
+  `week_min_days` = 3 mornings to flag fatigue (section B), the breathing search stops at min(0.50, HR/120) Hz
+  (section J), and the illness notes name alcohol, poor sleep, travel and stress as other causes (section C).
   `MorningStore.backfillBeatDerived` fills mornings with beats at launch. The demo CSV gained the three columns.
   **A2 UI:** Today has a week strip (`WeekStripView`, Mon–Sun, tap a day → detail, "N of 7" ring) and *Today's
   numbers* (`TodayNumbers.swift`: Regeneration / Readiness / Stress rings with ⓘ, level label, short chips); the
