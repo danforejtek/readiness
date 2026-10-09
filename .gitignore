@@ -5,3 +5,5 @@ sessions/
 *.log
 exports/
 .build/
+.DS_Store
+xcuserdata/
