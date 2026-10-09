@@ -1,4 +1,0 @@
-module HRVCore {
-header "HRVCore-Swift.h"
-export *
-}
